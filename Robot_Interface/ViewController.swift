@@ -137,12 +137,14 @@ class rJoystickView: NSView
       weg.removeAllPoints()
    }
    
-   
+   override func keyDown(with theEvent: NSEvent) {
+      Swift.print( "Key Pressed" )
+   }
    
 } // rJoystickView
 
 
-class ViewController: NSViewController
+class ViewController: NSViewController, NSWindowDelegate
 {
    
    // var  myUSBController:USBController
@@ -760,6 +762,20 @@ class ViewController: NSViewController
       */
       
    }
+   
+   // https://nabtron.com/quit-cocoa-app-window-close/
+   override func viewDidAppear() 
+   {
+      print("viewDidAppear")
+      self.view.window?.delegate = self as? NSWindowDelegate 
+   }
+   
+   func windowShouldClose(_ sender: Any) 
+   {
+      print("windowShouldClose")
+      NSApplication.shared().terminate(self)
+   }
+
    
    override var representedObject: Any? {
       didSet {
