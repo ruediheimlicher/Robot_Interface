@@ -59,13 +59,20 @@ class rJoystickView: NSView
       currentContext.strokePath()
       
       NSColor.blue.set() // choose color
-      let figure = NSBezierPath() // container for line(s)
-      let x:Double = 10
-      let y:Double = 10
-      figure.move(to: NSMakePoint(CGFloat(x), CGFloat(y))) // start point
-      figure.line(to: NSMakePoint(CGFloat(x + 100.0), CGFloat(y + 10.0))) // destination
-      figure.lineWidth = 1  // hair line
-      //figure.stroke()  // draw line(s) in color
+      let achsen = NSBezierPath() // container for line(s)
+      let w:CGFloat = bounds.size.width
+      let h:CGFloat = bounds.size.height
+      let mittex:CGFloat = bounds.size.width / 2
+      let mittey:CGFloat = bounds.size.height / 2
+      achsen.move(to: NSMakePoint(0, mittey)) // start point
+      achsen.line(to: NSMakePoint(w, mittey)) // destination
+      achsen.move(to: NSMakePoint(mittex, 0)) // start point
+      achsen.line(to: NSMakePoint(mittex, h)) // destination
+      achsen.lineWidth = 1  // hair line
+      achsen.stroke()  // draw line(s) in color
+      
+      NSColor.green.set() // choose color
+      weg.lineWidth = 2
       weg.stroke()  // draw line(s) in color
    }
    
@@ -208,6 +215,9 @@ class ViewController: NSViewController, NSWindowDelegate
    @IBOutlet weak var Pot0_Stepper_L_Feld: NSTextField!
    @IBOutlet weak var Pot0_Stepper_H_Feld: NSTextField!
    
+   @IBOutlet weak var goto_0_x: NSTextField!
+   @IBOutlet weak var goto_0_y: NSTextField!
+   
    
    @IBOutlet weak var Pot1_Feld: NSTextField!
    @IBOutlet weak var Pot1_Slider: NSSlider!
@@ -249,8 +259,8 @@ class ViewController: NSViewController, NSWindowDelegate
    let SET_0:UInt8 = 0xA1
    let SET_1:UInt8 = 0xB1
    
-   let SET_2:UInt8 = 0xB1
-   let SET_3:UInt8 = 0xC1
+   let SET_2:UInt8 = 0xC1
+   let SET_3:UInt8 = 0xD1
 
    let SET_ROB:UInt8 = 0xA2
    
@@ -301,6 +311,7 @@ class ViewController: NSViewController, NSWindowDelegate
       NotificationCenter.default.addObserver(self, selector:#selector(joystickAktion(_:)),name:NSNotification.Name(rawValue: "joystick"),object:nil)
       
       // Pot 0
+      
       Pot0_Slider.integerValue = Int(ACHSE0_START)
       Pot0_Feld.integerValue = Int(ACHSE0_START)
       let intpos0 = UInt16(Float(ACHSE0_START) * FAKTOR0)
@@ -330,12 +341,12 @@ class ViewController: NSViewController, NSWindowDelegate
       Pot2_Stepper_H_Feld.integerValue = Int(Pot2_Slider.maxValue)
       
       // Pot 3
-      Pot3_Slider.integerValue = Int(ACHSE1_START)
-      Pot3_Feld.integerValue = Int(ACHSE1_START)
+      Pot3_Slider.integerValue = Int(ACHSE3_START)
+      Pot3_Feld.integerValue = Int(ACHSE3_START)
       Pot3_Stepper_L.integerValue = 0
       Pot3_Stepper_L_Feld.integerValue = 0 
-      Pot3_Stepper_H.integerValue = Int(Pot1_Slider.maxValue)
-      Pot3_Stepper_H_Feld.integerValue = Int(Pot1_Slider.maxValue)
+      Pot3_Stepper_H.integerValue = Int(Pot3_Slider.maxValue)
+      Pot3_Stepper_H_Feld.integerValue = Int(Pot3_Slider.maxValue)
       
       
       
@@ -498,7 +509,46 @@ class ViewController: NSViewController, NSWindowDelegate
          //print("report_Slider0 senderfolg: \(senderfolg)")
       }
    }
+   
+   @IBAction func report_goto_0(_ sender: NSButton)
+   {
+      print("report_goto_0")
+      var x = goto_0_x.integerValue
+      if x > Int(Pot0_Slider.maxValue)
+      {
+         x = Int(Pot0_Slider.maxValue)
+      }
+      var y = goto_0_y.integerValue
+      if y > Int(Pot1_Slider.maxValue)
+      {
+         y = Int(Pot1_Slider.maxValue)
+      }
+      
+      print("report_goto_0  x: \(x) y: \(y)")
+      self.goto_0(x:Float(x),y:Float(y))
+   }
 
+   func goto_0(x:Float, y:Float)
+   {
+      teensy.write_byteArray[0] = GOTO_0
+      print("goto_0 x: \(x) y: \(y)")
+      // achse 0
+      let intposx = UInt16(x * FAKTOR0)
+      teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((intposx & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((intposx & 0x00FF) & 0xFF) // lb
+
+      // Achse 1
+      let intposy = UInt16(y * FAKTOR0)
+      teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((intposy & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intposy & 0x00FF) & 0xFF) // lb
+
+      if (usbstatus > 0)
+      {
+         let senderfolg = teensy.send_USB()
+      }
+
+      
+   }
    
    @IBAction func report_Slider1(_ sender: NSSlider)
    {
@@ -553,9 +603,13 @@ class ViewController: NSViewController, NSWindowDelegate
    @IBAction func report_StartSinus(_ sender: NSButton)
    {
       print("report_StartSinus ")
+      let intpos0 = UInt16(Float(ACHSE0_START) * FAKTOR0)
+      Pot0_Feld.integerValue = Int(UInt16(Float(ACHSE0_START) * FAKTOR0))
+
       teensy.write_byteArray[0] = SIN_START
-      teensy.write_byteArray[1] = SIN_START
-      let startwert = ACHSE0_START
+      let intpos = UInt16(Float(ACHSE0_START) * FAKTOR0)
+      let startwert = UInt16(Float(ACHSE0_START) * FAKTOR0)
+      
       teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((startwert & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((startwert & 0x00FF) & 0xFF) // lb
       if (usbstatus > 0)
@@ -669,19 +723,29 @@ class ViewController: NSViewController, NSWindowDelegate
    @IBAction func report_Slider3(_ sender: NSSlider)
    {
       teensy.write_byteArray[0] = SET_3 // Code 
-      print("report_Slider3 IntVal: \(sender.intValue)")
+      //print("report_Slider3 IntVal: \(sender.intValue)")
       
       let pos = sender.floatValue
-      let p = pos / Float(sender.maxValue) * 5.12
-      let Pstring = formatter.string(from: NSNumber(value: p))
-    //  print("report_Slider0 pos: \(intpos)  u: \(u) Ustring: \(Ustring ?? "0")")
-
-      print("report_Slider2 p: \(p) Pstring: \(Pstring ?? "0")")
-      let intpos = sender.intValue 
-      teensy.write_byteArray[ACHSE3_BYTE_H] = UInt8((intpos & 0x00FF) & 0xFF)
-      teensy.write_byteArray[ACHSE3_BYTE_L] = UInt8((intpos & 0xFF00) >> 8)
-      _ = teensy.send_USB()
       
+      let intpos = UInt16(pos * FAKTOR3)
+      let Ustring = formatter.string(from: NSNumber(value: intpos))
+      
+      //print("report_Slider3 pos: \(pos) intpos: \(intpos)  Ustring: \(Ustring ?? "0")")
+      // Pot0_Feld.stringValue  = Ustring!
+      Pot3_Feld.integerValue  = Int(intpos)
+      Pot3_Stepper_L.integerValue  = Int(sender.minValue) // Stepper min setzen
+      Pot3_Stepper_L_Feld.integerValue = Int(sender.minValue)
+      Pot3_Stepper_H.integerValue  = Int(sender.maxValue) // Stepper max setzen
+      Pot3_Stepper_H_Feld.integerValue = Int(sender.maxValue)
+      
+      teensy.write_byteArray[ACHSE3_BYTE_H] = UInt8((intpos & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE3_BYTE_L] = UInt8((intpos & 0x00FF) & 0xFF) // lb
+      
+      if (usbstatus > 0)
+      {
+         let senderfolg = teensy.send_USB()
+         print("report_Slider3 senderfolg: \(senderfolg)")
+      }
    }
 
 
