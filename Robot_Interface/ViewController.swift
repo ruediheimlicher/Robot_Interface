@@ -161,7 +161,7 @@ class rJoystickView: NSView
       let nc = NotificationCenter.default
       nc.post(name:Notification.Name(rawValue:"joystick"),
               object: nil,
-              userInfo: ["message":"mousedown", "punkt":lokalpunkt])
+              userInfo: ["message":"mousedrag", "punkt":lokalpunkt])
       
 
    }
@@ -177,7 +177,77 @@ class rJoystickView: NSView
    
 } // rJoystickView
 
+struct position
+{
+   var x:UInt16 = 0
+   var y:UInt16 = 0
+   var z:UInt16 = 0
+   
+}
+//MARK: rServoPfad
+class rServoPfad
+{
+   var pfadarray = [position]()
+   var delta = 1 // Abstand der Schritte
+   required init?() 
+   {
+      //super.init()
+      Swift.print("servoPfad init")
+      var startposition = position()
+      startposition.x = 0
+      startposition.y = 0
+      startposition.z = 0
+      pfadarray.append(startposition)
+      
+   }
+   
+   func setStartposition(x:UInt16, y:UInt16, z:UInt16)
+   {
+      if (pfadarray.count > 0)
+      {
+         pfadarray[0].x = x
+         pfadarray[0].y = y
+         pfadarray[0].z = z
+      }
+   }
+   func addPosition(newx:UInt16, newy:UInt16, newz:UInt16)
+   {
+      if pfadarray.count > 1
+      {
+         let lastposition = pfadarray.last
+         
+         let lastx:Int = Int(lastposition!.x)
+         let nextx:Int = Int(newx)
+         let hypx:Int = (nextx - lastx) * (nextx - lastx)
+         
+         let lasty:Int = Int(lastposition!.y)
+         let nexty:Int = Int(newy)
+         let hypy:Int = (nexty - lasty) * (nexty - lasty)
+         
+         let lastz:Int = Int(lastposition!.z)
+         let nextz:Int = Int(newz)
+         let hypz:Int = (nextz - lastz) * (nextz - lastz)
+         
+         let hyp = sqrt(Double(hypx + hypy + hypz) )
+        
+         print("hypx: \(hypx) hypy: \(hypy) hypz: \(hypz) hyp: \(hyp)")
+       // let hyp = (newx - lastposition?.x)^2 + (newy - lastposition?.y)^2 + (newz - lastposition?.z)^2
+         
+      }
+      let newposition = position(x:newx,y:newy,z:newz)
+      pfadarray.append(newposition)
+    }
+ 
+   
+   func anzahlPunkte() -> Int
+   {
+      return pfadarray.count
+   }
+   
 
+}
+
+//MARK: ViewController
 class ViewController: NSViewController, NSWindowDelegate
 {
    
@@ -186,6 +256,8 @@ class ViewController: NSViewController, NSWindowDelegate
    var usbstatus: Int32 = 0
    
    var teensy = usb_teensy()
+   
+   var servoPfad = rServoPfad()
    
    @IBOutlet weak var manufactorer: NSTextField!
    @IBOutlet weak var Counter: NSTextField!
@@ -214,10 +286,14 @@ class ViewController: NSViewController, NSWindowDelegate
    @IBOutlet weak var Pot0_Stepper_L: NSStepper!
    @IBOutlet weak var Pot0_Stepper_L_Feld: NSTextField!
    @IBOutlet weak var Pot0_Stepper_H_Feld: NSTextField!
-   
-   @IBOutlet weak var goto_0_x: NSTextField!
-   @IBOutlet weak var goto_0_y: NSTextField!
-   
+  
+   @IBOutlet weak var joystick_x: NSTextField!
+   @IBOutlet weak var joystick_y: NSTextField!
+
+   @IBOutlet weak var goto_x: NSTextField!
+   @IBOutlet weak var goto_x_Stepper: NSStepper!
+   @IBOutlet weak var goto_y: NSTextField!
+   @IBOutlet weak var goto_y_Stepper: NSStepper!
    
    @IBOutlet weak var Pot1_Feld: NSTextField!
    @IBOutlet weak var Pot1_Slider: NSSlider!
@@ -248,8 +324,7 @@ class ViewController: NSViewController, NSWindowDelegate
    
    var formatter = NumberFormatter()
    
-   
-    
+      
    var achse0_start:UInt16  = ACHSE0_START;
    var achse0_max:UInt16   = ACHSE0_MAX;
 
@@ -309,6 +384,10 @@ class ViewController: NSViewController, NSWindowDelegate
       let newdataname = Notification.Name("newdata")
       NotificationCenter.default.addObserver(self, selector:#selector(newDataAktion(_:)),name:newdataname,object:nil)
       NotificationCenter.default.addObserver(self, selector:#selector(joystickAktion(_:)),name:NSNotification.Name(rawValue: "joystick"),object:nil)
+      
+      
+      // servoPfad
+      servoPfad?.setStartposition(x: 0x800, y: 0x800, z: 0)
       
       // Pot 0
       
@@ -386,8 +465,10 @@ class ViewController: NSViewController, NSWindowDelegate
       {
          x = w
       }
-      
-      let achse0 = Int(Float(x*faktorw) * FAKTOR0)
+      goto_x.integerValue = Int(Float(x*faktorw))
+      joystick_x.integerValue = Int(Float(x*faktorw))
+      goto_x_Stepper.integerValue = Int(Float(x*faktorw))
+      let achse0 = UInt16(Float(x*faktorw) * FAKTOR0)
       print("x: \(x) achse0: \(achse0)")
       teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((achse0 & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((achse0 & 0x00FF) & 0xFF) // lb
@@ -401,12 +482,21 @@ class ViewController: NSViewController, NSWindowDelegate
       {
          y = h
       }
-
-      let achse1 = Int(Float(y*faktorh) * FAKTOR1)
+      goto_y.integerValue = Int(Float(y*faktorh))
+      joystick_y.integerValue = Int(Float(y*faktorh))
+      goto_y_Stepper.integerValue = Int(Float(y*faktorh))
+      let achse1 = UInt16(Float(y*faktorh) * FAKTOR1)
       print("y: \(y) achse1: \(achse1)")
       teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((achse1 & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((achse1 & 0x00FF) & 0xFF) // lb
-
+      
+      let message:String = info?["message"] as! String
+      if (message == "mousedown")
+         {
+            servoPfad?.addPosition(newx: achse0, newy: achse1, newz: 0)
+         }
+      
+      
       if (usbstatus > 0)
       {
          let senderfolg = teensy.send_USB()
@@ -513,32 +603,34 @@ class ViewController: NSViewController, NSWindowDelegate
    @IBAction func report_goto_0(_ sender: NSButton)
    {
       print("report_goto_0")
-      var x = goto_0_x.integerValue
+      var x = goto_x.integerValue
       if x > Int(Pot0_Slider.maxValue)
       {
          x = Int(Pot0_Slider.maxValue)
       }
-      var y = goto_0_y.integerValue
+      var y = goto_y.integerValue
       if y > Int(Pot1_Slider.maxValue)
       {
          y = Int(Pot1_Slider.maxValue)
       }
       
       print("report_goto_0  x: \(x) y: \(y)")
-      self.goto_0(x:Float(x),y:Float(y))
+      self.goto_0(x:Float(x),y:Float(y),z: 0)
    }
 
-   func goto_0(x:Float, y:Float)
+   func goto_0(x:Float, y:Float, z:Float)
    {
       teensy.write_byteArray[0] = GOTO_0
       print("goto_0 x: \(x) y: \(y)")
       // achse 0
       let intposx = UInt16(x * FAKTOR0)
+      goto_x_Stepper.integerValue = Int(x) //Int(intposx)
       teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((intposx & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((intposx & 0x00FF) & 0xFF) // lb
 
       // Achse 1
-      let intposy = UInt16(y * FAKTOR0)
+      let intposy = UInt16(y * FAKTOR1)
+      goto_y_Stepper.integerValue = Int(y)
       teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((intposy & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intposy & 0x00FF) & 0xFF) // lb
 
@@ -547,6 +639,55 @@ class ViewController: NSViewController, NSWindowDelegate
          let senderfolg = teensy.send_USB()
       }
 
+      
+   }
+   
+   @IBAction func report_goto_x_Stepper(_ sender: NSStepper)
+   {
+      //teensy.write_byteArray[0] = SET_0 // Code 
+      print("report_goto_x_Stepper IntVal: \(sender.intValue)")
+      let intpos = sender.integerValue 
+      goto_x.integerValue = intpos
+      let intposx = UInt16(Float(intpos ) * FAKTOR0)
+      teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((intposx & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((intposx & 0x00FF) & 0xFF) // lb
+      
+      let w = Double(Joystickfeld.bounds.size.width) // Breite Joystickfeld
+      let invertfaktorw:Float = Float(w / (Pot0_Slider.maxValue - Pot0_Slider.minValue)) 
+
+      var currpunkt:NSPoint = Joystickfeld.weg.currentPoint
+      currpunkt.x = CGFloat(Float(intpos) * invertfaktorw)
+      Joystickfeld.weg.line(to: currpunkt)
+      Joystickfeld.needsDisplay = true 
+      if (usbstatus > 0)
+      {
+         let senderfolg = teensy.send_USB()
+      }
+   }
+
+   @IBAction func report_goto_y_Stepper(_ sender: NSStepper)
+   {
+      //teensy.write_byteArray[0] = SET_0 // Code 
+      //print("report_goto_y_Stepper IntVal: \(sender.intValue)")
+      let intpos = sender.integerValue 
+      goto_y.integerValue = intpos
+      let intposy = UInt16(Float(intpos ) * FAKTOR0)
+      teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((intposy & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intposy & 0x00FF) & 0xFF) // lb
+
+      let h = Double(Joystickfeld.bounds.size.width) // Breite Joystickfeld
+      let invertfaktorh:Float = Float(h / (Pot1_Slider.maxValue - Pot1_Slider.minValue)) 
+      
+      var currpunkt:NSPoint = Joystickfeld.weg.currentPoint
+      currpunkt.y = CGFloat(Float(intpos) * invertfaktorh)
+      Joystickfeld.weg.line(to: currpunkt)
+      Joystickfeld.needsDisplay = true 
+
+      if (usbstatus > 0)
+      {
+         let senderfolg = teensy.send_USB()
+      }
+      
       
    }
    
@@ -676,6 +817,7 @@ class ViewController: NSViewController, NSWindowDelegate
       print("report_Pot0_Stepper_L Pot0_Slider.minValue: \(Pot0_Slider.minValue)")
       
    }
+   
    @IBAction func report_Pot0_Stepper_H(_ sender: NSStepper)// Obere Grenze
    {
       print("report_Pot0_Stepper_H IntVal: \(sender.integerValue)")
@@ -744,7 +886,7 @@ class ViewController: NSViewController, NSWindowDelegate
       if (usbstatus > 0)
       {
          let senderfolg = teensy.send_USB()
-         print("report_Slider3 senderfolg: \(senderfolg)")
+         //print("report_Slider3 senderfolg: \(senderfolg)")
       }
    }
 
