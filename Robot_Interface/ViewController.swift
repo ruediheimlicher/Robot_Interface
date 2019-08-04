@@ -867,10 +867,10 @@ class ViewController: NSViewController, NSWindowDelegate
       
    }
   
-   @IBAction func report_Slider2(_ sender: NSSlider)
+   @IBAction func report_Slider_sin(_ sender: NSSlider)
    {
       teensy.write_byteArray[0] = SET_2 // Code 
-      //print("report_Slider2 IntVal: \(sender.intValue)")
+      //print("report_Slider:sin IntVal: \(sender.intValue)")
       
       let pos = sender.floatValue
     
@@ -951,17 +951,17 @@ class ViewController: NSViewController, NSWindowDelegate
    }
    
    
-   @IBAction func report_Slider3(_ sender: NSSlider)
+   @IBAction func report_Slider2(_ sender: NSSlider)
    {
       teensy.write_byteArray[0] = SET_3 // Code 
-      //print("report_Slider3 IntVal: \(sender.intValue)")
+      //print("report_Slider2 IntVal: \(sender.intValue)")
       
       let pos = sender.floatValue
       
       let intpos = UInt16(pos * FAKTOR3)
       let Ustring = formatter.string(from: NSNumber(value: intpos))
       
-      //print("report_Slider3 pos: \(pos) intpos: \(intpos)  Ustring: \(Ustring ?? "0")")
+      //print("report_Slider2 pos: \(pos) intpos: \(intpos)  Ustring: \(Ustring ?? "0")")
       // Pot0_Feld.stringValue  = Ustring!
       Pot3_Feld.integerValue  = Int(intpos)
       Pot3_Stepper_L.integerValue  = Int(sender.minValue) // Stepper min setzen
@@ -975,7 +975,7 @@ class ViewController: NSViewController, NSWindowDelegate
       if (usbstatus > 0)
       {
          let senderfolg = teensy.send_USB()
-         //print("report_Slider3 senderfolg: \(senderfolg)")
+         //print("report_Slider2 senderfolg: \(senderfolg)")
       }
    }
 
