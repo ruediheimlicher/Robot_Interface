@@ -9,3 +9,5 @@
 import Foundation
 
 let GOTO_0:UInt8  =  0xAA
+let SET_RING:UInt8  =  0xA3
+let CLEAR_RING:UInt8  =  0xA4

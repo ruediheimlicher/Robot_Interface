@@ -31,11 +31,25 @@ let FAKTOR3:Float = 1.6
 class rJoystickView: NSView
 {
    var weg: NSBezierPath = NSBezierPath()
+   var kreuz: NSBezierPath = NSBezierPath()
+   var achsen: NSBezierPath = NSBezierPath()
    required init?(coder  aDecoder : NSCoder) 
    {
       super.init(coder: aDecoder)
       Swift.print("JoystickView init")
-      
+   //   NSColor.blue.set() // choose color
+     // let achsen = NSBezierPath() // container for line(s)
+      let w:CGFloat = bounds.size.width
+      let h:CGFloat = bounds.size.height
+      let mittex:CGFloat = bounds.size.width / 2
+      let mittey:CGFloat = bounds.size.height / 2
+      achsen.move(to: NSMakePoint(0, mittey)) // start point
+      achsen.line(to: NSMakePoint(w, mittey)) // destination
+      achsen.move(to: NSMakePoint(mittex, 0)) // start point
+      achsen.line(to: NSMakePoint(mittex, h)) // destination
+      achsen.lineWidth = 1  // hair line
+      //achsen.stroke()  // draw line(s) in color
+
    }
 
    // https://stackoverflow.com/questions/21751105/mac-os-x-convert-between-nsview-coordinates-and-global-screen-coordinates
@@ -57,7 +71,7 @@ class rJoystickView: NSView
       // draw the dashed path
       currentContext.addRect(bounds.insetBy(dx: dashHeight, dy: dashHeight))
       currentContext.strokePath()
-      
+      /*
       NSColor.blue.set() // choose color
       let achsen = NSBezierPath() // container for line(s)
       let w:CGFloat = bounds.size.width
@@ -70,8 +84,13 @@ class rJoystickView: NSView
       achsen.line(to: NSMakePoint(mittex, h)) // destination
       achsen.lineWidth = 1  // hair line
       achsen.stroke()  // draw line(s) in color
-      
+      */
+      NSColor.blue.set() // choose color
+      achsen.stroke() 
+      NSColor.red.set() // choose color
+      kreuz.stroke()
       NSColor.green.set() // choose color
+      
       weg.lineWidth = 2
       weg.stroke()  // draw line(s) in color
    }
@@ -87,11 +106,7 @@ class rJoystickView: NSView
       let lokalpunkt = convert(theEvent.locationInWindow, from: nil)
       Swift.print(lokalpunkt)
 
-      let nc = NotificationCenter.default
-      nc.post(name:Notification.Name(rawValue:"joystick"),
-              object: nil,
-              userInfo: ["message":"mousedown", "punkt":lokalpunkt])
-
+ 
       // setup the context
       // setup the context
       let dashHeight: CGFloat = 1
@@ -101,24 +116,34 @@ class rJoystickView: NSView
   //    NSColor.blue.set() // choose color
   // https://stackoverflow.com/questions/47738822/simple-drawing-with-mouse-on-cocoa-swift
       //clearWeg()
-      if weg.isEmpty
+      var userinformation:[String : Any]
+      if kreuz.isEmpty
       {
+         kreuz.move(to: lokalpunkt)
+         kreuz.line(to: NSMakePoint(lokalpunkt.x, lokalpunkt.y+5))
+         kreuz.line(to: lokalpunkt)
+         kreuz.line(to: NSMakePoint(lokalpunkt.x+5, lokalpunkt.y))
+         kreuz.line(to: lokalpunkt)
+         kreuz.line(to: NSMakePoint(lokalpunkt.x, lokalpunkt.y-5))
+         kreuz.line(to: lokalpunkt)
+         kreuz.line(to: NSMakePoint(lokalpunkt.x-5, lokalpunkt.y))
+         kreuz.line(to: lokalpunkt)
          weg.move(to: lokalpunkt)
-         weg.line(to: NSMakePoint(lokalpunkt.x, lokalpunkt.y+5))
-         weg.line(to: lokalpunkt)
-         weg.line(to: NSMakePoint(lokalpunkt.x+5, lokalpunkt.y))
-         weg.line(to: lokalpunkt)
-         weg.line(to: NSMakePoint(lokalpunkt.x, lokalpunkt.y-5))
-         weg.line(to: lokalpunkt)
-         weg.line(to: NSMakePoint(lokalpunkt.x-5, lokalpunkt.y))
-         weg.line(to: lokalpunkt)
+         
+         userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": 1] as [String : Any]
+      
       }
       else
       {
          weg.line(to: lokalpunkt)
+         userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": 0] as [String : Any]
       }
-      needsDisplay = true     
-
+        
+      let nc = NotificationCenter.default
+      nc.post(name:Notification.Name(rawValue:"joystick"),
+              object: nil,
+              userInfo: userinformation)
+      needsDisplay = true   
    }
    
    override func rightMouseDown(with theEvent: NSEvent) 
@@ -161,7 +186,7 @@ class rJoystickView: NSView
       let nc = NotificationCenter.default
       nc.post(name:Notification.Name(rawValue:"joystick"),
               object: nil,
-              userInfo: ["message":"mousedrag", "punkt":lokalpunkt])
+              userInfo: ["message":"mousedrag", "punkt":lokalpunkt, "index": weg.elementCount, "first": -1])
       
 
    }
@@ -169,6 +194,7 @@ class rJoystickView: NSView
    func clearWeg()
    {
       weg.removeAllPoints()
+      kreuz.removeAllPoints()
    }
    
    override func keyDown(with theEvent: NSEvent) {
@@ -185,7 +211,7 @@ struct position
    
 }
 //MARK: rServoPfad
-class rServoPfad
+class rServoPfad 
 {
    var pfadarray = [position]()
    var delta = 1 // Abstand der Schritte
@@ -212,6 +238,7 @@ class rServoPfad
    }
    func addPosition(newx:UInt16, newy:UInt16, newz:UInt16)
    {
+      /*
       if pfadarray.count > 1
       {
          let lastposition = pfadarray.last
@@ -234,6 +261,7 @@ class rServoPfad
        // let hyp = (newx - lastposition?.x)^2 + (newy - lastposition?.y)^2 + (newz - lastposition?.z)^2
          
       }
+       */
       let newposition = position(x:newx,y:newy,z:newz)
       pfadarray.append(newposition)
     }
@@ -241,7 +269,7 @@ class rServoPfad
    
    func anzahlPunkte() -> Int
    {
-      return pfadarray.count
+      return Int(pfadarray.count)
    }
    
 
@@ -321,6 +349,8 @@ class ViewController: NSViewController, NSWindowDelegate
    @IBOutlet weak var Pot3_Stepper_H_Feld: NSTextField!
 
    @IBOutlet weak var Joystickfeld: rJoystickView!
+   @IBOutlet weak var clear_Ring: NSButton!
+   
    
    var formatter = NumberFormatter()
    
@@ -364,6 +394,13 @@ class ViewController: NSViewController, NSWindowDelegate
    
    let ACHSE3_BYTE_H = 18
    let ACHSE3_BYTE_L = 19
+   
+   let HYP_BYTE_H = 22 // Hypotenuse
+   let HYP_BYTE_L = 23
+   
+   let INDEX_BYTE_H = 24
+   let INDEX_BYTE_L = 25
+   
 
 
 
@@ -427,14 +464,7 @@ class ViewController: NSViewController, NSWindowDelegate
       Pot3_Stepper_H.integerValue = Int(Pot3_Slider.maxValue)
       Pot3_Stepper_H_Feld.integerValue = Int(Pot3_Slider.maxValue)
       
-      
-      
-      
-      
-      
-      
-      
-      
+        
       teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8(((ACHSE0_START) & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8(((ACHSE0_START) & 0x00FF) & 0xFF) // lb
 
@@ -443,23 +473,24 @@ class ViewController: NSViewController, NSWindowDelegate
       
       teensy.write_byteArray[0] = SET_0
      
-
-      
    }
+   
    
    @objc func joystickAktion(_ notification:Notification) 
    {
       let info = notification.userInfo
       let punkt:CGPoint = info?["punkt"] as! CGPoint
+      let wegindex:Int = info?["index"] as! Int
+      let first:Int = info?["first"] as! Int
       //print("joystickAktion:\t \(punkt)")
-      //print("x: \(punkt.x) y: \(punkt.y)")
-
+      print("x: \(punkt.x) y: \(punkt.y) index: \(wegindex) first: \(first)")
+      
       teensy.write_byteArray[0] = SET_ROB // Code 
       
       // Horizontal Pot0
       let w = Double(Joystickfeld.bounds.size.width) // Breite Joystickfeld
       let faktorw:Double = (Pot0_Slider.maxValue - Pot0_Slider.minValue) / w
-//      print("w: \(w) faktorw: \(faktorw)")
+      //      print("w: \(w) faktorw: \(faktorw)")
       var x = Double(punkt.x)
       if (x > w)
       {
@@ -469,14 +500,14 @@ class ViewController: NSViewController, NSWindowDelegate
       joystick_x.integerValue = Int(Float(x*faktorw))
       goto_x_Stepper.integerValue = Int(Float(x*faktorw))
       let achse0 = UInt16(Float(x*faktorw) * FAKTOR0)
-      print("x: \(x) achse0: \(achse0)")
+      //print("x: \(x) achse0: \(achse0)")
       teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((achse0 & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((achse0 & 0x00FF) & 0xFF) // lb
-
+      
       
       let h = Double(Joystickfeld.bounds.size.height)
       let faktorh:Double = (Pot1_Slider.maxValue - Pot1_Slider.minValue) / h
- //     print("h: \(h) faktorh: \(faktorh)")
+      //     print("h: \(h) faktorh: \(faktorh)")
       var y = Double(punkt.y)
       if (y > h)
       {
@@ -486,24 +517,67 @@ class ViewController: NSViewController, NSWindowDelegate
       joystick_y.integerValue = Int(Float(y*faktorh))
       goto_y_Stepper.integerValue = Int(Float(y*faktorh))
       let achse1 = UInt16(Float(y*faktorh) * FAKTOR1)
-      print("y: \(y) achse1: \(achse1)")
+      //print("y: \(y) achse1: \(achse1)")
       teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((achse1 & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((achse1 & 0x00FF) & 0xFF) // lb
+      let achse2 =  UInt16(Float(y*faktorh) * FAKTOR1)
+      teensy.write_byteArray[ACHSE2_BYTE_H] = UInt8((achse2 & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE2_BYTE_L] = UInt8((achse2 & 0x00FF) & 0xFF) // lb
+    
       
       let message:String = info?["message"] as! String
-      if (message == "mousedown")
+      if (message == "mousedown") // Polynom
+      {
+         teensy.write_byteArray[0] = SET_RING
+         let anz = servoPfad?.anzahlPunkte()
+         if (wegindex > 1)
          {
-            servoPfad?.addPosition(newx: achse0, newy: achse1, newz: 0)
+            print("joystickAktion cont achse0: \(achse0) achse1: \(achse1) anz: \(anz) wegindex: \(wegindex)")
+            
+            let lastposition = servoPfad?.pfadarray.last
+            
+            let lastx:Int = Int(lastposition!.x)
+            let nextx:Int = Int(achse0)
+            let hypx:Int = (nextx - lastx) * (nextx - lastx)
+            
+            let lasty:Int = Int(lastposition!.y)
+            let nexty:Int = Int(achse1)
+            let hypy:Int = (nexty - lasty) * (nexty - lasty)
+            
+            let lastz:Int = Int(lastposition!.z)
+            let nextz:Int = Int(achse2)
+            let hypz:Int = (nextz - lastz) * (nextz - lastz)
+            
+            print("joystickAktion lastx: \(lastx) nextx: \(nextx) lasty: \(lasty) nexty: \(nexty)")
+            
+            let hyp = Int(sqrt(Double(hypx + hypy + hypz)))
+            
+            teensy.write_byteArray[HYP_BYTE_H] = UInt8((Int(hyp) & 0xFF00) >> 8) // hb
+            teensy.write_byteArray[HYP_BYTE_L] = UInt8((Int(hyp) & 0x00FF) & 0xFF) // lb
+            
+            teensy.write_byteArray[INDEX_BYTE_H] = UInt8(((wegindex-1) & 0xFF00) >> 8) // hb // hb // Start, Index 0
+            teensy.write_byteArray[INDEX_BYTE_L] = UInt8(((wegindex-1) & 0x00FF) & 0xFF) // lb
+
+            print("joystickAktion hypx: \(hypx) hypy: \(hypy) hypz: \(hypz) hyp: \(hyp)")
          }
-      
+         else
+         {
+            print("joystickAktion start achse0: \(achse0) achse1: \(achse1) anz: \(anz) wegindex: \(wegindex)")
+            teensy.write_byteArray[HYP_BYTE_H] = 0 // hb // Start, keine Hypo
+            teensy.write_byteArray[HYP_BYTE_L] = 0 // lb
+            teensy.write_byteArray[INDEX_BYTE_H] = 0 // hb // Start, Index 0
+            teensy.write_byteArray[INDEX_BYTE_L] = 0 // lb
+
+         }
+         
+         servoPfad?.addPosition(newx: achse0, newy: achse1, newz: 0)
+      }
       
       if (usbstatus > 0)
       {
          let senderfolg = teensy.send_USB()
          //print("report_Slider0 senderfolg: \(senderfolg)")
       }
-
-   
    }
  
  
@@ -642,6 +716,23 @@ class ViewController: NSViewController, NSWindowDelegate
       
    }
    
+    @IBAction func report_clear_Ring(_ sender: NSButton)
+    {
+      print("report_clear_Ring ")
+      teensy.write_byteArray[0] = CLEAR_RING
+      teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8(((ACHSE0_START) & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8(((ACHSE0_START) & 0x00FF) & 0xFF) // lb
+      
+      teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8(((ACHSE1_START) & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8(((ACHSE1_START) & 0x00FF) & 0xFF) // lb
+
+      if (usbstatus > 0)
+      {
+         let senderfolg = teensy.send_USB()
+      }
+
+   }
+   
    @IBAction func report_goto_x_Stepper(_ sender: NSStepper)
    {
       //teensy.write_byteArray[0] = SET_0 // Code 
@@ -687,8 +778,6 @@ class ViewController: NSViewController, NSWindowDelegate
       {
          let senderfolg = teensy.send_USB()
       }
-      
-      
    }
    
    @IBAction func report_Slider1(_ sender: NSSlider)
@@ -968,7 +1057,7 @@ class ViewController: NSViewController, NSWindowDelegate
          //println(manustring) // ok, Zahl
          
          let manufactorername = String(cString: UnsafePointer(manu!))
-         print("str: %s", manufactorername)
+         print("str: ", manufactorername)
          manufactorer.stringValue = manufactorername
          
          //manufactorer.stringValue = "Manufactorer: " + teensy.manufactorer()!
