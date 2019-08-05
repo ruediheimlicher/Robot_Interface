@@ -99,12 +99,12 @@ class rJoystickView: NSView
    {
       
       super.mouseDown(with: theEvent)
-      Swift.print("left mouse")
+  //    Swift.print("left mouse")
       let location = theEvent.locationInWindow
-      Swift.print(location)
+  //    Swift.print(location)
   //    NSPoint lokalpunkt = [self convertPoint: [anEvent locationInWindow] fromView: nil];
       let lokalpunkt = convert(theEvent.locationInWindow, from: nil)
-      Swift.print(lokalpunkt)
+  //    Swift.print(lokalpunkt)
 
  
       // setup the context
@@ -195,6 +195,8 @@ class rJoystickView: NSView
    {
       weg.removeAllPoints()
       kreuz.removeAllPoints()
+      needsDisplay = true
+ 
    }
    
    override func keyDown(with theEvent: NSEvent) {
@@ -223,7 +225,7 @@ class rServoPfad
       startposition.x = 0
       startposition.y = 0
       startposition.z = 0
-      pfadarray.append(startposition)
+ //     pfadarray.append(startposition)
       
    }
    
@@ -238,34 +240,14 @@ class rServoPfad
    }
    func addPosition(newx:UInt16, newy:UInt16, newz:UInt16)
    {
-      /*
-      if pfadarray.count > 1
-      {
-         let lastposition = pfadarray.last
-         
-         let lastx:Int = Int(lastposition!.x)
-         let nextx:Int = Int(newx)
-         let hypx:Int = (nextx - lastx) * (nextx - lastx)
-         
-         let lasty:Int = Int(lastposition!.y)
-         let nexty:Int = Int(newy)
-         let hypy:Int = (nexty - lasty) * (nexty - lasty)
-         
-         let lastz:Int = Int(lastposition!.z)
-         let nextz:Int = Int(newz)
-         let hypz:Int = (nextz - lastz) * (nextz - lastz)
-         
-         let hyp = sqrt(Double(hypx + hypy + hypz) )
-        
-         print("hypx: \(hypx) hypy: \(hypy) hypz: \(hypz) hyp: \(hyp)")
-       // let hyp = (newx - lastposition?.x)^2 + (newy - lastposition?.y)^2 + (newz - lastposition?.z)^2
-         
-      }
-       */
-      let newposition = position(x:newx,y:newy,z:newz)
+       let newposition = position(x:newx,y:newy,z:newz)
       pfadarray.append(newposition)
     }
  
+   func clearPfadarray()
+   {
+      pfadarray.removeAll()
+   }
    
    func anzahlPunkte() -> Int
    {
@@ -507,12 +489,15 @@ class ViewController: NSViewController, NSWindowDelegate
       
       let h = Double(Joystickfeld.bounds.size.height)
       let faktorh:Double = (Pot1_Slider.maxValue - Pot1_Slider.minValue) / h
+      
+      let faktorz = 1
       //     print("h: \(h) faktorh: \(faktorh)")
       var y = Double(punkt.y)
       if (y > h)
       {
          y = h
       }
+      let z = 0
       goto_y.integerValue = Int(Float(y*faktorh))
       joystick_y.integerValue = Int(Float(y*faktorh))
       goto_y_Stepper.integerValue = Int(Float(y*faktorh))
@@ -520,19 +505,19 @@ class ViewController: NSViewController, NSWindowDelegate
       //print("y: \(y) achse1: \(achse1)")
       teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((achse1 & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((achse1 & 0x00FF) & 0xFF) // lb
-      let achse2 =  UInt16(Float(y*faktorh) * FAKTOR1)
+      let achse2 =  UInt16(Float(z*faktorz) * FAKTOR2)
       teensy.write_byteArray[ACHSE2_BYTE_H] = UInt8((achse2 & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE2_BYTE_L] = UInt8((achse2 & 0x00FF) & 0xFF) // lb
     
       
       let message:String = info?["message"] as! String
-      if (message == "mousedown") // Polynom
+      if ((message == "mousedown") && (first >= 0))// Polynom ohne mousedragged
       {
          teensy.write_byteArray[0] = SET_RING
          let anz = servoPfad?.anzahlPunkte()
          if (wegindex > 1)
          {
-            print("joystickAktion cont achse0: \(achse0) achse1: \(achse1) anz: \(anz) wegindex: \(wegindex)")
+            print("joystickAktion cont achse0: \(achse0) achse1: \(achse1) anz: \(String(describing: anz)) wegindex: \(wegindex)")
             
             let lastposition = servoPfad?.pfadarray.last
             
@@ -725,6 +710,17 @@ class ViewController: NSViewController, NSWindowDelegate
       
       teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8(((ACHSE1_START) & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8(((ACHSE1_START) & 0x00FF) & 0xFF) // lb
+
+      teensy.write_byteArray[ACHSE2_BYTE_H] = UInt8(((ACHSE2_START) & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE2_BYTE_L] = UInt8(((ACHSE2_START) & 0x00FF) & 0xFF) // lb
+ 
+      teensy.write_byteArray[HYP_BYTE_H] = 0 // hb
+      teensy.write_byteArray[HYP_BYTE_L] = 0 // lb
+
+      teensy.write_byteArray[INDEX_BYTE_H] = 0 // hb
+      teensy.write_byteArray[INDEX_BYTE_L] = 0 // lb
+      Joystickfeld.clearWeg()
+      servoPfad?.clearPfadarray()
 
       if (usbstatus > 0)
       {
