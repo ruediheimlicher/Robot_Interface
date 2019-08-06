@@ -155,6 +155,7 @@ class rJoystickView: NSView
       needsDisplay = true
    }
  
+   /*
    override func mouseDragged(with theEvent: NSEvent) 
    {
       Swift.print("mouseDragged")
@@ -190,7 +191,7 @@ class rJoystickView: NSView
       
 
    }
-   
+   */
    func clearWeg()
    {
       weg.removeAllPoints()
@@ -290,6 +291,8 @@ class ViewController: NSViewController, NSWindowDelegate
    
    @IBOutlet weak var dataFeld: NSTextField!
    
+   @IBOutlet weak var schrittweiteFeld: NSTextField!
+   
    @IBOutlet weak var Pot0_Feld: NSTextField!
    @IBOutlet weak var Pot0_Slider: NSSlider!
    @IBOutlet weak var Pot0_Stepper_H: NSStepper!
@@ -383,7 +386,8 @@ class ViewController: NSViewController, NSWindowDelegate
    let INDEX_BYTE_H = 24
    let INDEX_BYTE_L = 25
    
-
+   let STEPS_BYTE_H = 26
+   let STEPS_BYTE_L = 27
 
 
     override func viewDidLoad()
@@ -462,7 +466,7 @@ class ViewController: NSViewController, NSWindowDelegate
    {
       let info = notification.userInfo
       let punkt:CGPoint = info?["punkt"] as! CGPoint
-      let wegindex:Int = info?["index"] as! Int
+      let wegindex:Int = info?["index"] as! Int // 
       let first:Int = info?["first"] as! Int
       //print("joystickAktion:\t \(punkt)")
       print("x: \(punkt.x) y: \(punkt.y) index: \(wegindex) first: \(first)")
@@ -517,7 +521,8 @@ class ViewController: NSViewController, NSWindowDelegate
          let anz = servoPfad?.anzahlPunkte()
          if (wegindex > 1)
          {
-            print("joystickAktion cont achse0: \(achse0) achse1: \(achse1) anz: \(String(describing: anz)) wegindex: \(wegindex)")
+            print("")
+            print("joystickAktion cont achse0: \(achse0) achse1: \(achse1)  achse2: \(achse2) anz: \(String(describing: anz)) wegindex: \(wegindex)")
             
             let lastposition = servoPfad?.pfadarray.last
             
@@ -535,19 +540,26 @@ class ViewController: NSViewController, NSWindowDelegate
             
             print("joystickAktion lastx: \(lastx) nextx: \(nextx) lasty: \(lasty) nexty: \(nexty)")
             
-            let hyp = Int(sqrt(Double(hypx + hypy + hypz)))
+            let hyp:Float = (sqrt((Float(hypx + hypy + hypz))))
             
+            let anzahlsteps = hyp/schrittweiteFeld.floatValue
+            print("joystickAktion hyp: \(hyp) anzahlsteps: \(anzahlsteps) ")
+
             teensy.write_byteArray[HYP_BYTE_H] = UInt8((Int(hyp) & 0xFF00) >> 8) // hb
             teensy.write_byteArray[HYP_BYTE_L] = UInt8((Int(hyp) & 0x00FF) & 0xFF) // lb
+       
+            teensy.write_byteArray[STEPS_BYTE_H] = UInt8((Int(anzahlsteps) & 0xFF00) >> 8) // hb
+            teensy.write_byteArray[STEPS_BYTE_L] = UInt8((Int(anzahlsteps) & 0x00FF) & 0xFF) // lb
             
             teensy.write_byteArray[INDEX_BYTE_H] = UInt8(((wegindex-1) & 0xFF00) >> 8) // hb // hb // Start, Index 0
             teensy.write_byteArray[INDEX_BYTE_L] = UInt8(((wegindex-1) & 0x00FF) & 0xFF) // lb
 
             print("joystickAktion hypx: \(hypx) hypy: \(hypy) hypz: \(hypz) hyp: \(hyp)")
+            
          }
          else
          {
-            print("joystickAktion start achse0: \(achse0) achse1: \(achse1) anz: \(anz) wegindex: \(wegindex)")
+            print("joystickAktion start achse0: \(achse0) achse1: \(achse1)  achse2: \(achse2) anz: \(anz) wegindex: \(wegindex)")
             teensy.write_byteArray[HYP_BYTE_H] = 0 // hb // Start, keine Hypo
             teensy.write_byteArray[HYP_BYTE_L] = 0 // lb
             teensy.write_byteArray[INDEX_BYTE_H] = 0 // hb // Start, Index 0
