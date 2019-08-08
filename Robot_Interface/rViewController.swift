@@ -259,8 +259,10 @@ class rServoPfad
 }
 
 //MARK: ViewController
-class ViewController: NSViewController, NSWindowDelegate
+class rViewController: NSViewController, NSWindowDelegate
 {
+   
+   
    
    // var  myUSBController:USBController
    // var usbzugang:
@@ -270,6 +272,7 @@ class ViewController: NSViewController, NSWindowDelegate
    
    var servoPfad = rServoPfad()
    
+   @IBOutlet weak var Device: NSTabView!
    @IBOutlet weak var manufactorer: NSTextField!
    @IBOutlet weak var Counter: NSTextField!
    
@@ -398,7 +401,7 @@ class ViewController: NSViewController, NSWindowDelegate
  
       formatter.maximumFractionDigits = 1
       formatter.minimumFractionDigits = 2
-       formatter.minimumIntegerDigits = 1
+      formatter.minimumIntegerDigits = 1
       //formatter.roundingMode = .down
 
       
@@ -406,14 +409,14 @@ class ViewController: NSViewController, NSWindowDelegate
       // Do any additional setup after loading the view.
       let newdataname = Notification.Name("newdata")
       NotificationCenter.default.addObserver(self, selector:#selector(newDataAktion(_:)),name:newdataname,object:nil)
-      NotificationCenter.default.addObserver(self, selector:#selector(joystickAktion(_:)),name:NSNotification.Name(rawValue: "joystick"),object:nil)
+//      NotificationCenter.default.addObserver(self, selector:#selector(joystickAktion(_:)),name:NSNotification.Name(rawValue: "joystick"),object:nil)
       
       
       // servoPfad
       servoPfad?.setStartposition(x: 0x800, y: 0x800, z: 0)
       
       // Pot 0
-      
+     /* 
       Pot0_Slider.integerValue = Int(ACHSE0_START)
       Pot0_Feld.integerValue = Int(ACHSE0_START)
       let intpos0 = UInt16(Float(ACHSE0_START) * FAKTOR0)
@@ -458,7 +461,7 @@ class ViewController: NSViewController, NSWindowDelegate
       teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8(((ACHSE1_START) & 0x00FF) & 0xFF) // lb
       
       teensy.write_byteArray[0] = SET_0
-     
+     */
    }
    
    
@@ -468,9 +471,10 @@ class ViewController: NSViewController, NSWindowDelegate
       let punkt:CGPoint = info?["punkt"] as! CGPoint
       let wegindex:Int = info?["index"] as! Int // 
       let first:Int = info?["first"] as! Int
-      //print("joystickAktion:\t \(punkt)")
+      print("xxx joystickAktion:\t \(punkt)")
       print("x: \(punkt.x) y: \(punkt.y) index: \(wegindex) first: \(first)")
       
+      /*
       teensy.write_byteArray[0] = SET_ROB // Code 
       
       // Horizontal Pot0
@@ -575,6 +579,7 @@ class ViewController: NSViewController, NSWindowDelegate
          let senderfolg = teensy.send_USB()
          //print("report_Slider0 senderfolg: \(senderfolg)")
       }
+      */
    }
  
  
@@ -815,6 +820,30 @@ class ViewController: NSViewController, NSWindowDelegate
       }
    }
 
+   @IBAction func report_Pot1_Stepper_L(_ sender: NSStepper) // untere Grenze
+   {
+      print("report_Pot1_Stepper_L IntVal: \(sender.integerValue)")
+      
+      let intpos = sender.integerValue 
+      Pot1_Stepper_L_Feld.integerValue = intpos
+      
+      Pot1_Slider.minValue = sender.doubleValue 
+      print("report_Pot1_Stepper_L Pot1_Slider.minValue: \(Pot1_Slider.minValue)")
+      
+   }
+   
+   @IBAction func report_Pot1_Stepper_H(_ sender: NSStepper)// Obere Grenze
+   {
+      print("report_Pot1_Stepper_H IntVal: \(sender.integerValue)")
+      
+      let intpos = sender.integerValue 
+      Pot1_Stepper_H_Feld.integerValue = intpos
+      
+      Pot1_Slider.maxValue = sender.doubleValue 
+      print("report_Pot1_Stepper_H Pot1_Slider.maxValue: \(Pot1_Slider.maxValue)")
+      
+   }
+
    @IBAction func report_I_Stepper(_ sender: NSStepper)
    {
       //teensy.write_byteArray[0] = SET_0 // Code 
@@ -971,11 +1000,11 @@ class ViewController: NSViewController, NSWindowDelegate
       
       //print("report_Slider2 pos: \(pos) intpos: \(intpos)  Ustring: \(Ustring ?? "0")")
       // Pot0_Feld.stringValue  = Ustring!
-      Pot3_Feld.integerValue  = Int(intpos)
-      Pot3_Stepper_L.integerValue  = Int(sender.minValue) // Stepper min setzen
-      Pot3_Stepper_L_Feld.integerValue = Int(sender.minValue)
-      Pot3_Stepper_H.integerValue  = Int(sender.maxValue) // Stepper max setzen
-      Pot3_Stepper_H_Feld.integerValue = Int(sender.maxValue)
+      Pot2_Feld.integerValue  = Int(intpos)
+      Pot2_Stepper_L.integerValue  = Int(sender.minValue) // Stepper min setzen
+      Pot2_Stepper_L_Feld.integerValue = Int(sender.minValue)
+      Pot2_Stepper_H.integerValue  = Int(sender.maxValue) // Stepper max setzen
+      Pot2_Stepper_H_Feld.integerValue = Int(sender.maxValue)
       
       teensy.write_byteArray[ACHSE3_BYTE_H] = UInt8((intpos & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE3_BYTE_L] = UInt8((intpos & 0x00FF) & 0xFF) // lb
@@ -1030,7 +1059,8 @@ class ViewController: NSViewController, NSWindowDelegate
    {
       let present = teensy.dev_present()
       let hidstatus = teensy.status()
-      
+      let nc = NotificationCenter.default
+      var userinformation:[String : Any]
       print("USBOpen usbstatus vor check: \(usbstatus) hidstatus: \(hidstatus) present: \(present)")
       if (usbstatus > 0) // already open
       {
@@ -1071,6 +1101,12 @@ class ViewController: NSViewController, NSWindowDelegate
          //manufactorer.stringValue = "Manufactorer: " + teensy.manufactorer()!
          Start_Knopf.isEnabled = true
          Send_Knopf.isEnabled = true
+         
+         userinformation = ["message":"usb", "usbstatus": 1] as [String : Any]
+         nc.post(name:Notification.Name(rawValue:"usb_status"),
+                 object: nil,
+                 userInfo: userinformation)
+
       }
       else
          
@@ -1081,7 +1117,11 @@ class ViewController: NSViewController, NSWindowDelegate
          warnung.messageText = "check_USB: Kein USB-Device"
          warnung.addButton(withTitle: "OK")
          warnung.runModal()
-         
+         userinformation = ["message":"usb", "usbstatus": 0] as [String : Any]
+         nc.post(name:Notification.Name(rawValue:"usb_status"),
+                 object: nil,
+                 userInfo: userinformation)
+
          if let taste = USB_OK
          {
             //print("Taste USB_OK ist nicht nil")
