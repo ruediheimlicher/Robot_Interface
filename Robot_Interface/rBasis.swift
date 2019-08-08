@@ -134,6 +134,11 @@ class rBasis: rViewController
    let STEPS_BYTE_L = 27
 */
    
+   override func viewDidAppear() 
+   {
+      print ("Basis viewDidAppear selectedDevice: \(selectedDevice)")
+   }
+   
    override func viewDidLoad() 
     {
         super.viewDidLoad()
@@ -147,12 +152,14 @@ class rBasis: rViewController
       formatter.minimumIntegerDigits = 1
       //formatter.roundingMode = .down
       
+      let sup = self.view.superview
+      print("DeviceTab superview: \(sup) ident: \(sup?.identifier)")
       
       //USB_OK.backgroundColor = NSColor.greenColor()
       // Do any additional setup after loading the view.
       let newdataname = Notification.Name("newdata")
       NotificationCenter.default.addObserver(self, selector:#selector(newDataAktion(_:)),name:newdataname,object:nil)
-      NotificationCenter.default.addObserver(self, selector:#selector(joystickAktion(_:)),name:NSNotification.Name(rawValue: "joystick"),object:nil)
+  //    NotificationCenter.default.addObserver(self, selector:#selector(joystickAktion(_:)),name:NSNotification.Name(rawValue: "joystick"),object:nil)
       NotificationCenter.default.addObserver(self, selector:#selector(usbstatusAktion(_:)),name:NSNotification.Name(rawValue: "usb_status"),object:nil)
       
       
@@ -208,151 +215,7 @@ class rBasis: rViewController
   
    
    }
-   // MARK USB
-   /*
-   @IBAction func report_start_read_USB(_ sender: AnyObject)
-   {
-      //myUSBController.startRead(1)
-      if teensy.dev_present() > 0
-      {
-         var start_read_USB_erfolg = teensy.start_read_USB(true)
-         Start_Knopf.isEnabled = false
-         Stop_Knopf.isEnabled = true
-         
-      }
-      else
-      {
-         let warnung = NSAlert.init()
-         warnung.messageText = "USB"
-         warnung.messageText = "report_start_read_USB: Kein USB-Device"
-         warnung.addButton(withTitle: "OK")
-         warnung.runModal()
-         Start_Knopf.isEnabled = false
-         Stop_Knopf.isEnabled = false
-         
-      }
-      
-      //teensy.start_teensy_Timer()
-      
-      //     var somethingToPass = "It worked"
-      
-      //      let timer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: Selector("tester:"), userInfo: somethingToPass, repeats: true)
-      
-   }
-   
-   @IBAction func check_USB(_ sender: NSButton)
-   {
-      let present = teensy.dev_present()
-      let hidstatus = teensy.status()
-      
-      print("USBOpen usbstatus vor check: \(usbstatus) hidstatus: \(hidstatus) present: \(present)")
-      if (usbstatus > 0) // already open
-      {
-         print("USB-Device ist schon da")
-         let warnung = NSAlert.init()
-         warnung.messageText = "USB"
-         warnung.messageText = "USB-Device ist schon da"
-         warnung.addButton(withTitle: "OK")
-         warnung.runModal()
-         // return
-         
-      }
-      let erfolg = teensy.USBOpen()
-      usbstatus = erfolg
-      print("USBOpen erfolg: \(erfolg) usbstatus: \(usbstatus)")
-      
-      if (rawhid_status()==1)
-      {
-         print("status 1")
-         USB_OK.backgroundColor = NSColor.green
-         print("USB-Device da")
-         /*
-          let warnung = NSAlert.init()
-          warnung.messageText = "USB"
-          warnung.messageText = "USB-Device ist da"
-          warnung.addButton(withTitle: "OK")
-          //warnung.runModal()
-          */
-         let manu = get_manu()
-         //println(manu) // ok, Zahl
-         //         var manustring = UnsafePointer<CUnsignedChar>(manu)
-         //println(manustring) // ok, Zahl
-         
-         let manufactorername = String(cString: UnsafePointer(manu!))
-         print("str: ", manufactorername)
-         manufactorer.stringValue = manufactorername
-         
-         //manufactorer.stringValue = "Manufactorer: " + teensy.manufactorer()!
-         Start_Knopf.isEnabled = true
-         Send_Knopf.isEnabled = true
-      }
-      else
-         
-      {
-         print("status 0")
-         let warnung = NSAlert.init()
-         warnung.messageText = "USB"
-         warnung.messageText = "check_USB: Kein USB-Device"
-         warnung.addButton(withTitle: "OK")
-         warnung.runModal()
-         
-         if let taste = USB_OK
-         {
-            //print("Taste USB_OK ist nicht nil")
-            taste.backgroundColor = NSColor.red
-            //USB_OK.backgroundColor = NSColor.redColor()
-            
-         }
-         else
-         {
-            print("Taste USB_OK ist nil")
-         }
-         Start_Knopf.isEnabled = false
-         Stop_Knopf.isEnabled = false
-         Send_Knopf.isEnabled = false
-         return
-      }
-      print("antwort: \(teensy.status())")
-   }
-   
-   @IBAction func report_stop_read_USB(_ sender: AnyObject)
-   {
-      if teensy.dev_present() > 0
-      {
-         teensy.read_OK = false
-         if teensy.dev_present() > 0
-         {
-            Start_Knopf.isEnabled = true
-            Send_Knopf.isEnabled = true
-         }
-         else
-         {
-            Start_Knopf.isEnabled = false
-         }
-         Stop_Knopf.isEnabled = false
-      }
-   }
-   
-   @IBAction func send_USB(_ sender: AnyObject)
-   {
-      //NSBeep()
-      if teensy.dev_present() > 0
-      {
-         var senderfolg = teensy.send_USB()
-      }
-      else
-      {
-         let warnung = NSAlert.init()
-         warnung.messageText = "USB"
-         warnung.messageText = "send_USB: Kein USB-Device"
-         warnung.addButton(withTitle: "OK")
-         warnung.runModal()
-         Send_Knopf.isEnabled = false
-         
-      }
-   }
-   */
-   
+ 
    @objc func usbstatusAktion(_ notification:Notification) 
    {
       let info = notification.userInfo
@@ -360,122 +223,134 @@ class rBasis: rViewController
       print("Basis usbstatusAktion:\t \(status)")
       usbstatus = Int32(status)
    }
+
    
-   // MARK joystick
+ // MARK: joystick
    @objc override func joystickAktion(_ notification:Notification) 
    {
-      print("Basis joystickAktion usbstatus:\t \(usbstatus)")
-      let info = notification.userInfo
-      let punkt:CGPoint = info?["punkt"] as! CGPoint
-      let wegindex:Int = info?["index"] as! Int // 
-      let first:Int = info?["first"] as! Int
-      print("Basis joystickAktion:\t \(punkt)")
-      print("x: \(punkt.x) y: \(punkt.y) index: \(wegindex) first: \(first)")
+      print("Basis joystickAktion usbstatus:\t \(usbstatus) selectedDevice: \(selectedDevice) ident: \(self.view.identifier)")
       
-      teensy.write_byteArray[0] = SET_ROB // Code 
-      
-      // Horizontal Pot0
-      let w = Double(Joystickfeld.bounds.size.width) // Breite Joystickfeld
-      let faktorw:Double = (Pot0_Slider.maxValue - Pot0_Slider.minValue) / w
-      //      print("w: \(w) faktorw: \(faktorw)")
-      var x = Double(punkt.x)
-      if (x > w)
+      if (selectedDevice == self.view.identifier)
       {
-         x = w
-      }
-      goto_x.integerValue = Int(Float(x*faktorw))
-      joystick_x.integerValue = Int(Float(x*faktorw))
-      goto_x_Stepper.integerValue = Int(Float(x*faktorw))
-      let achse0 = UInt16(Float(x*faktorw) * FAKTOR0)
-      //print("x: \(x) achse0: \(achse0)")
-      teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((achse0 & 0xFF00) >> 8) // hb
-      teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((achse0 & 0x00FF) & 0xFF) // lb
-      
-      
-      let h = Double(Joystickfeld.bounds.size.height)
-      let faktorh:Double = (Pot1_Slider.maxValue - Pot1_Slider.minValue) / h
-      
-      let faktorz = 1
-      //     print("h: \(h) faktorh: \(faktorh)")
-      var y = Double(punkt.y)
-      if (y > h)
-      {
-         y = h
-      }
-      let z = 0
-      goto_y.integerValue = Int(Float(y*faktorh))
-      joystick_y.integerValue = Int(Float(y*faktorh))
-      goto_y_Stepper.integerValue = Int(Float(y*faktorh))
-      let achse1 = UInt16(Float(y*faktorh) * FAKTOR1)
-      //print("y: \(y) achse1: \(achse1)")
-      teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((achse1 & 0xFF00) >> 8) // hb
-      teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((achse1 & 0x00FF) & 0xFF) // lb
-      let achse2 =  UInt16(Float(z*faktorz) * FAKTOR2)
-      teensy.write_byteArray[ACHSE2_BYTE_H] = UInt8((achse2 & 0xFF00) >> 8) // hb
-      teensy.write_byteArray[ACHSE2_BYTE_L] = UInt8((achse2 & 0x00FF) & 0xFF) // lb
-      
-      
-      let message:String = info?["message"] as! String
-      if ((message == "mousedown") && (first >= 0))// Polynom ohne mousedragged
-      {
-         teensy.write_byteArray[0] = SET_RING
-         let anz = servoPfad?.anzahlPunkte()
-         if (wegindex > 1)
+         print("Basis joystickAktion passt")
+         
+         let info = notification.userInfo
+         let punkt:CGPoint = info?["punkt"] as! CGPoint
+         let wegindex:Int = info?["index"] as! Int // 
+         let first:Int = info?["first"] as! Int
+         print("Basis joystickAktion:\t \(punkt)")
+         print("x: \(punkt.x) y: \(punkt.y) index: \(wegindex) first: \(first)")
+         
+         teensy.write_byteArray[0] = SET_ROB // Code 
+         
+         // Horizontal Pot0
+         let w = Double(Joystickfeld.bounds.size.width) // Breite Joystickfeld
+         let faktorw:Double = (Pot0_Slider.maxValue - Pot0_Slider.minValue) / w
+         //      print("w: \(w) faktorw: \(faktorw)")
+         var x = Double(punkt.x)
+         if (x > w)
          {
-            print("")
-            print("joystickAktion cont achse0: \(achse0) achse1: \(achse1)  achse2: \(achse2) anz: \(String(describing: anz)) wegindex: \(wegindex)")
-            
-            let lastposition = servoPfad?.pfadarray.last
-            
-            let lastx:Int = Int(lastposition!.x)
-            let nextx:Int = Int(achse0)
-            let hypx:Int = (nextx - lastx) * (nextx - lastx)
-            
-            let lasty:Int = Int(lastposition!.y)
-            let nexty:Int = Int(achse1)
-            let hypy:Int = (nexty - lasty) * (nexty - lasty)
-            
-            let lastz:Int = Int(lastposition!.z)
-            let nextz:Int = Int(achse2)
-            let hypz:Int = (nextz - lastz) * (nextz - lastz)
-            
-            print("joystickAktion lastx: \(lastx) nextx: \(nextx) lasty: \(lasty) nexty: \(nexty)")
-            
-            let hyp:Float = (sqrt((Float(hypx + hypy + hypz))))
-            
-            let anzahlsteps = hyp/schrittweiteFeld.floatValue
-            print("joystickAktion hyp: \(hyp) anzahlsteps: \(anzahlsteps) ")
-            
-            teensy.write_byteArray[HYP_BYTE_H] = UInt8((Int(hyp) & 0xFF00) >> 8) // hb
-            teensy.write_byteArray[HYP_BYTE_L] = UInt8((Int(hyp) & 0x00FF) & 0xFF) // lb
-            
-            teensy.write_byteArray[STEPS_BYTE_H] = UInt8((Int(anzahlsteps) & 0xFF00) >> 8) // hb
-            teensy.write_byteArray[STEPS_BYTE_L] = UInt8((Int(anzahlsteps) & 0x00FF) & 0xFF) // lb
-            
-            teensy.write_byteArray[INDEX_BYTE_H] = UInt8(((wegindex-1) & 0xFF00) >> 8) // hb // hb // Start, Index 0
-            teensy.write_byteArray[INDEX_BYTE_L] = UInt8(((wegindex-1) & 0x00FF) & 0xFF) // lb
-            
-            print("joystickAktion hypx: \(hypx) hypy: \(hypy) hypz: \(hypz) hyp: \(hyp)")
-            
+            x = w
          }
-         else
+         goto_x.integerValue = Int(Float(x*faktorw))
+         joystick_x.integerValue = Int(Float(x*faktorw))
+         goto_x_Stepper.integerValue = Int(Float(x*faktorw))
+         let achse0 = UInt16(Float(x*faktorw) * FAKTOR0)
+         //print("x: \(x) achse0: \(achse0)")
+         teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((achse0 & 0xFF00) >> 8) // hb
+         teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((achse0 & 0x00FF) & 0xFF) // lb
+         
+         
+         let h = Double(Joystickfeld.bounds.size.height)
+         let faktorh:Double = (Pot1_Slider.maxValue - Pot1_Slider.minValue) / h
+         
+         let faktorz = 1
+         //     print("h: \(h) faktorh: \(faktorh)")
+         var y = Double(punkt.y)
+         if (y > h)
          {
-            print("joystickAktion start achse0: \(achse0) achse1: \(achse1)  achse2: \(achse2) anz: \(anz) wegindex: \(wegindex)")
-            teensy.write_byteArray[HYP_BYTE_H] = 0 // hb // Start, keine Hypo
-            teensy.write_byteArray[HYP_BYTE_L] = 0 // lb
-            teensy.write_byteArray[INDEX_BYTE_H] = 0 // hb // Start, Index 0
-            teensy.write_byteArray[INDEX_BYTE_L] = 0 // lb
+            y = h
+         }
+         let z = 0
+         goto_y.integerValue = Int(Float(y*faktorh))
+         joystick_y.integerValue = Int(Float(y*faktorh))
+         goto_y_Stepper.integerValue = Int(Float(y*faktorh))
+         let achse1 = UInt16(Float(y*faktorh) * FAKTOR1)
+         //print("y: \(y) achse1: \(achse1)")
+         teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((achse1 & 0xFF00) >> 8) // hb
+         teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((achse1 & 0x00FF) & 0xFF) // lb
+         let achse2 =  UInt16(Float(z*faktorz) * FAKTOR2)
+         teensy.write_byteArray[ACHSE2_BYTE_H] = UInt8((achse2 & 0xFF00) >> 8) // hb
+         teensy.write_byteArray[ACHSE2_BYTE_L] = UInt8((achse2 & 0x00FF) & 0xFF) // lb
+         
+         
+         let message:String = info?["message"] as! String
+         if ((message == "mousedown") && (first >= 0))// Polynom ohne mousedragged
+         {
+            teensy.write_byteArray[0] = SET_RING
+            let anz = servoPfad?.anzahlPunkte()
+            if (wegindex > 1)
+            {
+               print("")
+               print("joystickAktion cont achse0: \(achse0) achse1: \(achse1)  achse2: \(achse2) anz: \(String(describing: anz)) wegindex: \(wegindex)")
+               
+               let lastposition = servoPfad?.pfadarray.last
+               
+               let lastx:Int = Int(lastposition!.x)
+               let nextx:Int = Int(achse0)
+               let hypx:Int = (nextx - lastx) * (nextx - lastx)
+               
+               let lasty:Int = Int(lastposition!.y)
+               let nexty:Int = Int(achse1)
+               let hypy:Int = (nexty - lasty) * (nexty - lasty)
+               
+               let lastz:Int = Int(lastposition!.z)
+               let nextz:Int = Int(achse2)
+               let hypz:Int = (nextz - lastz) * (nextz - lastz)
+               
+               print("joystickAktion lastx: \(lastx) nextx: \(nextx) lasty: \(lasty) nexty: \(nexty)")
+               
+               let hyp:Float = (sqrt((Float(hypx + hypy + hypz))))
+               
+               let anzahlsteps = hyp/schrittweiteFeld.floatValue
+               print("joystickAktion hyp: \(hyp) anzahlsteps: \(anzahlsteps) ")
+               
+               teensy.write_byteArray[HYP_BYTE_H] = UInt8((Int(hyp) & 0xFF00) >> 8) // hb
+               teensy.write_byteArray[HYP_BYTE_L] = UInt8((Int(hyp) & 0x00FF) & 0xFF) // lb
+               
+               teensy.write_byteArray[STEPS_BYTE_H] = UInt8((Int(anzahlsteps) & 0xFF00) >> 8) // hb
+               teensy.write_byteArray[STEPS_BYTE_L] = UInt8((Int(anzahlsteps) & 0x00FF) & 0xFF) // lb
+               
+               teensy.write_byteArray[INDEX_BYTE_H] = UInt8(((wegindex-1) & 0xFF00) >> 8) // hb // hb // Start, Index 0
+               teensy.write_byteArray[INDEX_BYTE_L] = UInt8(((wegindex-1) & 0x00FF) & 0xFF) // lb
+               
+               print("joystickAktion hypx: \(hypx) hypy: \(hypy) hypz: \(hypz) hyp: \(hyp)")
+               
+            }
+            else
+            {
+               print("joystickAktion start achse0: \(achse0) achse1: \(achse1)  achse2: \(achse2) anz: \(anz) wegindex: \(wegindex)")
+               teensy.write_byteArray[HYP_BYTE_H] = 0 // hb // Start, keine Hypo
+               teensy.write_byteArray[HYP_BYTE_L] = 0 // lb
+               teensy.write_byteArray[INDEX_BYTE_H] = 0 // hb // Start, Index 0
+               teensy.write_byteArray[INDEX_BYTE_L] = 0 // lb
+               
+            }
             
+            servoPfad?.addPosition(newx: achse0, newy: achse1, newz: 0)
          }
          
-         servoPfad?.addPosition(newx: achse0, newy: achse1, newz: 0)
+         if (usbstatus > 0)
+         {
+            let senderfolg = teensy.send_USB()
+            //print("report_Slider0 senderfolg: \(senderfolg)")
+         }
+      }
+      else
+      {
+         print("Basis joystickAktion passt nicht")
       }
       
-      if (usbstatus > 0)
-      {
-         let senderfolg = teensy.send_USB()
-         //print("report_Slider0 senderfolg: \(senderfolg)")
-      }
    }
    
    

@@ -258,6 +258,30 @@ class rServoPfad
 
 }
 
+//MARK: TABVIEW
+class rDeviceTabViewController: NSTabViewController 
+{
+   override func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) 
+   {
+      let identifier:String = tabViewItem?.identifier as! String
+      print("DeviceTab identifier: \(String(describing: identifier))")
+    // let sup = self.view.superview
+     // print("DeviceTab superview: \(sup) ident: \(sup?.identifier)")
+   //let supsup = self.view.superview?.superview
+      //print("DeviceTab supsup: \(supsup) ident: \(supsup?.identifier)")
+      //print("subviews: \(supsup?.subviews)")
+      
+      var userinformation:[String : Any]
+      userinformation = ["message":"tabview",  "ident": identifier, ] as [String : Any]
+      let nc = NotificationCenter.default
+      nc.post(name:Notification.Name(rawValue:"tabview"),
+              object: nil,
+              userInfo: userinformation)
+ 
+   }
+   
+}
+
 //MARK: ViewController
 class rViewController: NSViewController, NSWindowDelegate
 {
@@ -271,6 +295,10 @@ class rViewController: NSViewController, NSWindowDelegate
    var teensy = usb_teensy()
    
    var servoPfad = rServoPfad()
+   
+   var selectedDevice:String = ""
+   
+   
    
    @IBOutlet weak var Device: NSTabView!
    @IBOutlet weak var manufactorer: NSTextField!
@@ -392,8 +420,7 @@ class rViewController: NSViewController, NSWindowDelegate
    let STEPS_BYTE_H = 26
    let STEPS_BYTE_L = 27
 
-
-    override func viewDidLoad()
+   override func viewDidLoad()
    {
       super.viewDidLoad()
       
@@ -409,8 +436,9 @@ class rViewController: NSViewController, NSWindowDelegate
       // Do any additional setup after loading the view.
       let newdataname = Notification.Name("newdata")
       NotificationCenter.default.addObserver(self, selector:#selector(newDataAktion(_:)),name:newdataname,object:nil)
-//      NotificationCenter.default.addObserver(self, selector:#selector(joystickAktion(_:)),name:NSNotification.Name(rawValue: "joystick"),object:nil)
-      
+      NotificationCenter.default.addObserver(self, selector:#selector(joystickAktion(_:)),name:NSNotification.Name(rawValue: "joystick"),object:nil)
+      NotificationCenter.default.addObserver(self, selector:#selector(tabviewAktion(_:)),name:NSNotification.Name(rawValue: "tabview"),object:nil)
+
       
       // servoPfad
       servoPfad?.setStartposition(x: 0x800, y: 0x800, z: 0)
@@ -463,6 +491,15 @@ class rViewController: NSViewController, NSWindowDelegate
       teensy.write_byteArray[0] = SET_0
      */
    }
+   
+   @objc func tabviewAktion(_ notification:Notification) 
+   {
+      let info = notification.userInfo
+      let ident:String = info?["ident"] as! String  // 
+      //print("Basis tabviewAktion:\t \(ident)")
+      selectedDevice = ident
+   }
+
    
    
    @objc func joystickAktion(_ notification:Notification) 
@@ -1242,7 +1279,7 @@ class rViewController: NSViewController, NSWindowDelegate
       self.view.window?.delegate = self as? NSWindowDelegate 
    }
    
-   func windowShouldClose(_ sender: Any) 
+   @nonobjc func windowShouldClose(_ sender: Any) 
    {
       print("windowShouldClose")
       NSApplication.shared().terminate(self)
