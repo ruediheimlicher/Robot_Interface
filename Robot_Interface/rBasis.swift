@@ -228,18 +228,18 @@ class rBasis: rViewController
  // MARK: joystick
    @objc override func joystickAktion(_ notification:Notification) 
    {
-      print("Basis joystickAktion usbstatus:\t \(usbstatus) selectedDevice: \(selectedDevice) ident: \(self.view.identifier)")
+     // print("Basis joystickAktion usbstatus:\t \(usbstatus) selectedDevice: \(selectedDevice) ident: \(self.view.identifier)")
       
       if (selectedDevice == self.view.identifier)
       {
-         print("Basis joystickAktion passt")
+  //       print("Basis joystickAktion passt")
          
          let info = notification.userInfo
          let punkt:CGPoint = info?["punkt"] as! CGPoint
          let wegindex:Int = info?["index"] as! Int // 
          let first:Int = info?["first"] as! Int
-         print("Basis joystickAktion:\t \(punkt)")
-         print("x: \(punkt.x) y: \(punkt.y) index: \(wegindex) first: \(first)")
+  //       print("Basis joystickAktion:\t \(punkt)")
+  //       print("x: \(punkt.x) y: \(punkt.y) index: \(wegindex) first: \(first)")
          
          teensy.write_byteArray[0] = SET_ROB // Code 
          
@@ -348,7 +348,7 @@ class rBasis: rViewController
       }
       else
       {
-         print("Basis joystickAktion passt nicht")
+ //        print("Basis joystickAktion passt nicht")
       }
       
    }

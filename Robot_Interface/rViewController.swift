@@ -33,6 +33,9 @@ class rJoystickView: NSView
    var weg: NSBezierPath = NSBezierPath()
    var kreuz: NSBezierPath = NSBezierPath()
    var achsen: NSBezierPath = NSBezierPath()
+   var mittelpunkt:NSPoint = NSZeroPoint
+   var winkel:CGFloat = 0
+   var hyp:CGFloat = 0
    required init?(coder  aDecoder : NSCoder) 
    {
       super.init(coder: aDecoder)
@@ -43,6 +46,9 @@ class rJoystickView: NSView
       let h:CGFloat = bounds.size.height
       let mittex:CGFloat = bounds.size.width / 2
       let mittey:CGFloat = bounds.size.height / 2
+      mittelpunkt = NSMakePoint(mittex, mittey)
+      hyp = bounds.size.height / 2
+      Swift.print("JoystickView init mittex: \(mittex) mittey: \(mittey) hyp: \(hyp)")
       achsen.move(to: NSMakePoint(0, mittey)) // start point
       achsen.line(to: NSMakePoint(w, mittey)) // destination
       achsen.move(to: NSMakePoint(mittex, 0)) // start point
@@ -99,7 +105,8 @@ class rJoystickView: NSView
    {
       
       super.mouseDown(with: theEvent)
-  //    Swift.print("left mouse")
+      let ident  = self.identifier as! String
+ //     Swift.print("left mouse ident: \(ident)")
       let location = theEvent.locationInWindow
   //    Swift.print(location)
   //    NSPoint lokalpunkt = [self convertPoint: [anEvent locationInWindow] fromView: nil];
@@ -131,12 +138,13 @@ class rJoystickView: NSView
          weg.move(to: lokalpunkt)
          
          userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": 1] as [String : Any]
-      
+         userinformation["ident"] = self.identifier
       }
       else
       {
          weg.line(to: lokalpunkt)
          userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": 0] as [String : Any]
+         userinformation["ident"] = self.identifier
       }
         
       let nc = NotificationCenter.default
@@ -199,13 +207,278 @@ class rJoystickView: NSView
       needsDisplay = true
  
    }
-   
-   override func keyDown(with theEvent: NSEvent) {
+   /*
+   override func rotate(byDegrees angle: CGFloat) 
+   {
+      var transform = NSAffineTransform()
+      transform.rotate(byDegrees: angle)
+      weg.transform(using: transform as AffineTransform)
+      
+   }
+   */
+   override func keyDown(with theEvent: NSEvent)
+   {
       Swift.print( "Key Pressed" )
    }
    
-} // rJoystickView
+  } // rJoystickView
 
+
+class rZeigerView:NSView
+{
+   var zeigerpfad: NSBezierPath = NSBezierPath()
+   var feld = frame
+   override init(frame frameRect: NSRect) 
+   {
+      super.init(frame:frameRect);
+      self.wantsLayer = true
+      //self.layer?.backgroundColor = NSColor.red.cgColor
+      let w:CGFloat = bounds.size.width
+      let h:CGFloat = bounds.size.height
+      let mittex:CGFloat = bounds.size.width / 2
+      let mittey:CGFloat = bounds.size.height / 2
+      zeigerpfad.move(to: NSMakePoint(mittex, 0)) // start point
+      zeigerpfad.line(to: NSMakePoint(mittex, h))
+//     zeigerpfad.rotateAroundCenter(angle: 10)
+      //zeigerpfad.stroke()
+   }
+   
+   required init?(coder: NSCoder) {
+      super.init(coder: coder)
+   }
+   
+   func setFeld(feld: NSRect)
+   {
+   //   self.setBoundsOrigin(feld.origin)
+      self.setBoundsOrigin(feld.origin)
+      self.setBoundsSize(feld.size)
+      
+
+   }
+   
+   override func draw(_ dirtyRect: NSRect)
+   {
+      let blackColor = NSColor(red: 0.0, green: 0.0, blue: 1.0, alpha: 1.0)
+      blackColor.set()
+      //zeigerpfad.stroke()
+    //  zeigerpfad.move(to: NSMakePoint(20, 75))
+      /*
+      var bPath: NSBezierPath = NSBezierPath(rect:dirtyRect)
+      var lineDash:[CGFloat] = [20.0,5.0,5.0]
+      bPath.move(to: NSMakePoint(20, 75))
+      bPath.line(to: NSMakePoint(dirtyRect.size.width - 20, 75))
+      bPath.lineWidth = 10.0
+      bPath.setLineDash(lineDash, count: 3, phase: 0.0)
+      bPath.stroke()
+      
+      
+      var cPath: NSBezierPath = NSBezierPath(rect:dirtyRect)
+      cPath.move(to: NSMakePoint(10, 10))
+      cPath.curve(to: NSMakePoint(dirtyRect.size.width - 20, 25), controlPoint1: NSMakePoint(10, 10), controlPoint2: NSMakePoint(15, 20))
+      cPath.lineWidth = 4.0
+      
+      cPath.stroke()
+ */
+   }
+   
+}
+
+var zeigerfeld1 = NSMakeRect(50, 10, 50, 50)
+class rDrehknopfView: rJoystickView
+{
+  // var zeigerfeld = NSMakeRect(10, 10, 10, 10)
+    
+//   var zeiger:rZeigerView = rZeigerView(frame:zeigerfeld1)
+   var ring: NSBezierPath = NSBezierPath()
+   let d:CGFloat = 40; // Durchmesser zeigerbereich
+   var zeigerbereich:NSRect = NSZeroRect
+   var knopfrect:NSRect = NSZeroRect
+  var zeigerpfad: NSBezierPath = NSBezierPath()
+   //var winkel:CGFloat = 0
+   
+   required init?(coder  aDecoder : NSCoder) 
+   {
+      super.init(coder: aDecoder)
+      Swift.print("DrehknopfView init")
+      //   NSColor.blue.set() // choose color
+      // let achsen = NSBezierPath() // container for line(s)
+      /*
+      let w:CGFloat = bounds.size.width
+      let h:CGFloat = bounds.size.height
+      let mittex:CGFloat = bounds.size.width / 2
+      let mittey:CGFloat = bounds.size.height / 2
+ */
+      achsen.lineWidth = 1  // hair line
+    
+      knopfrect = bounds
+  //    knopfrect.insetBy(dx: 10, dy: 10)
+ //     offsetBy(dx: 5, dy: <#T##CGFloat#>)
+      //knopfrect.offsetBy(dx: -5, dy: -5)
+      let w:CGFloat = knopfrect.size.width
+      let h:CGFloat = knopfrect.size.height
+      let mittex:CGFloat = knopfrect.size.width / 2
+      let mittey:CGFloat = knopfrect.size.height / 2
+      achsen.move(to: NSMakePoint(0, mittey)) // start point
+      achsen.line(to: NSMakePoint(w, mittey)) // destination
+      achsen.move(to: NSMakePoint(mittex, 0)) // start point
+      achsen.line(to: NSMakePoint(mittex, h)) // destination
+
+      
+      weg.appendOval(in: knopfrect)
+      zeigerpfad.move(to: NSMakePoint(mittex, 5)) // start point
+      zeigerpfad.line(to: NSMakePoint(mittex, h-12)) // destination
+      zeigerpfad.line(to: NSMakePoint(mittex-5, h-18)) // destination
+      
+      zeigerpfad.move(to: NSMakePoint(mittex+5, h-18)) // destination
+      zeigerpfad.line(to: NSMakePoint(mittex, h-12)) // destination
+      
+      zeigerpfad.lineWidth = 2 
+  //    var zeigerfeld = zeigerpfad.bounds
+  //    var zeigerrand:NSBezierPath = NSBezierPath()
+   //   zeigerrand.appendRect(zeigerfeld)
+   //   zeigerrand.move(to: NSMakePoint(mittex, 10))
+    //  zeigerpfad.rotateAroundCenter(angle:10)
+   //   zeigerbereich = zeigerpfad.bounds
+      zeigerbereich = NSMakeRect(zeigerpfad.currentPoint.x - d/2, zeigerpfad.currentPoint.y - d/2,d,d)
+      
+      weg.appendOval(in: bounds)
+//      Swift.print("zeiger bounds vor origin x: \(zeiger.bounds.origin.x) y: \(zeiger.bounds.origin.y) size h: \(zeiger.bounds.height) w: \(zeiger.bounds.width)")
+//      Swift.print("zeiger frame vor origin x: \(zeiger.frame.origin.x) y: \(zeiger.frame.origin.y) size h: \(zeiger.frame.height) w: \(zeiger.frame.width)")
+
+   //   zeiger.setFeld(feld: self.bounds)
+   //    addSubview(zeiger)
+      
+ //     Swift.print("zeiger bounds nach origin x: \(zeiger.bounds.origin.x) y: \(zeiger.bounds.origin.y) size h: \(zeiger.bounds.height) w: \(zeiger.bounds.width)")
+  //    Swift.print("zeiger frame nach origin x: \(zeiger.frame.origin.x) y: \(zeiger.frame.origin.y) size h: \(zeiger.frame.height) w: \(zeiger.frame.width)")
+
+  //    zeigerpfad.rotateAroundCenter(angle: 45)
+      //weg.rotateAroundCenter(angle: -17)
+      
+   
+   }
+   
+   
+    
+   override func mouseDown(with theEvent: NSEvent) 
+   {
+      
+      super.mouseDown(with: theEvent)
+//          Swift.print("Drehknopf left mouse")
+      let location = theEvent.locationInWindow
+      //    Swift.print(location)
+      //    NSPoint lokalpunkt = [self convertPoint: [anEvent locationInWindow] fromView: nil];
+      let lokalpunkt = convert(theEvent.locationInWindow, from: nil)
+      //    Swift.print(lokalpunkt)
+      
+      /*
+      if NSPointInRect(lokalpunkt,zeigerbereich)
+      {
+         Swift.print("Klick ok")
+         
+         
+         
+         zeigerpfad.rotateAroundCenterB(angle:10)
+         zeigerbereich = NSMakeRect(zeigerpfad.currentPoint.x - d/2, zeigerpfad.currentPoint.y - d/2,d,d)
+      }
+      */
+      
+      if weg.contains(lokalpunkt)
+      {
+ //        Swift.print("contains ok ")
+         let currentx = lokalpunkt.x
+         let currenty = lokalpunkt.y
+         //let x = pow(Float(lokalpunkt.x) ,2)
+         var spiegeln:CGFloat = 1 // Bereich rechts
+         var addwinkel:CGFloat = 0
+         if (lokalpunkt.x < mittelpunkt.x)
+         {
+            spiegeln = -1
+            addwinkel = 180
+         }
+         
+         let newhyp = CGFloat(sqrt(pow((Float(lokalpunkt.y)-Float(mittelpunkt.y)),2) + pow((Float(lokalpunkt.x) - Float(mittelpunkt.x)),2)))
+         
+         
+         
+         var newarc = (lokalpunkt.y - mittelpunkt.y) / newhyp
+        
+         let newwinkel = asin(newarc) * 180 / CGFloat(Double.pi) //* spiegeln
+     //    Swift.print("md lokalpunkt.x:\t \(lokalpunkt.x)\t lokalpunkt.y: \t\(lokalpunkt.y) \tmittelpunkt.x: \t\(mittelpunkt.x)  \tmittelpunkt.y: \t\(mittelpunkt.y)\t newhyp:\t \(newhyp) \tnewarc: \t\(newarc) \tnewwinkel: \t\(newwinkel) \twinkel: \t\(winkel)")
+         Swift.print("md newhyp: \(newhyp) winkel: \(winkel) newarc: \(newarc) newwinkel: \(newwinkel)")
+
+         zeigerpfad.rotateAroundCenterB(angle:(newwinkel - winkel) )
+         
+         
+         zeigerbereich = NSMakeRect(zeigerpfad.currentPoint.x - d/2, zeigerpfad.currentPoint.y - d/2,d,d)
+      
+      }
+     
+      
+   }
+   // https://stackoverflow.com/questions/21751105/mac-os-x-convert-between-nsview-coordinates-and-global-screen-coordinates
+   override func draw(_ dirtyRect: NSRect) 
+   {
+      // https://stackoverflow.com/questions/36596545/how-to-draw-a-dash-line-border-for-nsview
+ //     super.draw(dirtyRect)
+       
+      // dash customization parameters
+      let dashHeight: CGFloat = 1
+      let dashColor: NSColor = .green
+      
+      // setup the context
+      let currentContext = NSGraphicsContext.current()!.cgContext
+      //currentContext.setLineWidth(dashHeight)
+      //currentContext.setLineDash(phase: 0, lengths: [dashLength])
+     // currentContext.setStrokeColor(dashColor.cgColor)
+      
+      // draw the dashed path
+   //   currentContext.addRect(bounds.insetBy(dx: dashHeight, dy: dashHeight))
+  //    currentContext.strokePath()
+      /*
+       NSColor.blue.set() // choose color
+       let achsen = NSBezierPath() // container for line(s)
+       let w:CGFloat = bounds.size.width
+       let h:CGFloat = bounds.size.height
+       let mittex:CGFloat = bounds.size.width / 2
+       let mittey:CGFloat = bounds.size.height / 2
+       achsen.move(to: NSMakePoint(0, mittey)) // start point
+       achsen.line(to: NSMakePoint(w, mittey)) // destination
+       achsen.move(to: NSMakePoint(mittex, 0)) // start point
+       achsen.line(to: NSMakePoint(mittex, h)) // destination
+       achsen.lineWidth = 1  // hair line
+       achsen.stroke()  // draw line(s) in color
+       */
+      NSColor.blue.set() // choose color
+//      achsen.rotateAroundCenter(angle: 10)
+ //     achsen.stroke() 
+      NSColor.red.set() // choose color
+ //     kreuz.stroke()
+      NSColor.green.set() // choose color
+      
+      weg.lineWidth = 2
+      weg.stroke()  // draw line(s) in color
+      NSColor.red.set() // choose color
+      zeigerpfad.stroke()
+      var zeigerrand:NSBezierPath = NSBezierPath(rect:zeigerbereich)
+      zeigerrand.stroke()
+ 
+      
+       
+//      zeigerrandB.stroke()
+     
+      let currentx = zeigerpfad.currentPoint.x
+      let currenty = zeigerpfad.currentPoint.y
+      hyp = CGFloat(sqrt(pow((Float(currenty)-Float(mittelpunkt.y)),2) + pow((Float(currentx) - Float(mittelpunkt.x)),2)))
+      
+     let arc = (currenty - mittelpunkt.y) / hyp
+      winkel = asin(arc) * 180 / CGFloat(Double.pi)
+  //    Swift.print("draw currentx: \t\(currentx) \tcurrenty: \t\(currenty) \tmittelpunkt.x: \t\(mittelpunkt.x)  \tmittelpunkt.y: \t\(mittelpunkt.y)\t hyp:\t\(hyp)\t newarc: \t\(arc) \tnewwinkel: \t\(winkel) \twinkel: \t\(winkel)")
+      Swift.print("draw hyp: \(hyp) winkel: \(winkel) arc: \(arc) ")
+
+      //Swift.print("currentx: \(currentx) currenty: \(currenty) winkel: \(winkel)")
+      needsDisplay = true
+   } // draw
+} // DerhknopfView
 struct position
 {
    var x:UInt16 = 0
@@ -239,6 +512,7 @@ class rServoPfad
          pfadarray[0].z = z
       }
    }
+   
    func addPosition(newx:UInt16, newy:UInt16, newz:UInt16)
    {
        let newposition = position(x:newx,y:newy,z:newz)
@@ -346,8 +620,7 @@ class rViewController: NSViewController, NSWindowDelegate
    @IBOutlet weak var Pot1_Stepper_L_Feld: NSTextField!
    @IBOutlet weak var Pot1_Stepper_H_Feld: NSTextField!
 
-   
-   
+
    @IBOutlet weak var Pot2_Feld: NSTextField!
    @IBOutlet weak var Pot2_Slider: NSSlider!
    @IBOutlet weak var Pot2_Stepper: NSStepper!
@@ -508,8 +781,8 @@ class rViewController: NSViewController, NSWindowDelegate
       let punkt:CGPoint = info?["punkt"] as! CGPoint
       let wegindex:Int = info?["index"] as! Int // 
       let first:Int = info?["first"] as! Int
-      print("xxx joystickAktion:\t \(punkt)")
-      print("x: \(punkt.x) y: \(punkt.y) index: \(wegindex) first: \(first)")
+      //print("xxx joystickAktion:\t \(punkt)")
+      //print("x: \(punkt.x) y: \(punkt.y) index: \(wegindex) first: \(first)")
       
       /*
       teensy.write_byteArray[0] = SET_ROB // Code 
@@ -1285,7 +1558,8 @@ class rViewController: NSViewController, NSWindowDelegate
       NSApplication.shared().terminate(self)
    }
    
-   override var representedObject: Any? {
+   override var representedObject: Any? 
+      {
       didSet {
          // Update the view, if already loaded.
       }
@@ -1294,3 +1568,44 @@ class rViewController: NSViewController, NSWindowDelegate
    
 }
 
+extension NSBezierPath
+{
+   func rotateAroundCenter(angle: CGFloat)
+   {
+      let midh = NSMidX(self.bounds)/2
+      let midv = NSMidY(self.bounds)/2
+      let center = NSMakePoint(midh, midv)
+      var transform = NSAffineTransform()
+ //     transform.rotate(byDegrees: angle)
+ //     self.transform(using: transform as AffineTransform)
+  
+      let originBounds:NSRect = NSMakeRect(NSZeroPoint.x, NSZeroPoint.y , self.bounds.size.width, self.bounds.size.height )
+      Swift.print("rotateAround bounds vor rotate origin x: \(self.bounds.origin.x) y: \(self.bounds.origin.y) size h: \(self.bounds.height) w: \(self.bounds.width)")
+
+      transform = NSAffineTransform()
+     transform.translateX(by: +(NSWidth(originBounds) / 2 ), yBy: +(NSHeight(originBounds) / 2))
+      transform.rotate(byDegrees: angle)
+      transform.translateX(by: -(NSWidth(originBounds) / 2 ), yBy: -(NSHeight(originBounds) / 2))
+
+      //   transform = transform.rotated(by: angle)
+   //   transform = transform.translatedBy(x: -center.x, y: -center.y)
+      self.transform(using:transform as AffineTransform)
+      
+      Swift.print("rotateAround bounds nach rotate origin x: \(self.bounds.origin.x) y: \(self.bounds.origin.y) size h: \(self.bounds.height) w: \(self.bounds.width)")
+
+   }
+   
+   // https://stackoverflow.com/questions/50012606/how-to-rotate-uibezierpath-around-center-of-its-own-bounds
+   func rotateAroundCenterB(angle: CGFloat)
+   {
+      let midh = NSMidX(self.bounds)
+      let midv = NSMidY(self.bounds)
+      let center = NSMakePoint(midh, midv)
+
+      var transform = NSAffineTransform()
+      transform.translateX(by: center.x, yBy: center.y)
+      transform.rotate(byDegrees: angle)
+      transform.translateX(by: -center.x, yBy: -center.y)
+      self.transform(using:transform as AffineTransform)
+   }
+}
