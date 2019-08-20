@@ -73,18 +73,18 @@ class rTrigo: rViewController
       NotificationCenter.default.addObserver(self, selector:#selector(drehknopfAktion(_:)),name:NSNotification.Name(rawValue: "drehknopf"),object:nil)
 
       
-      Pot1_Slider.maxValue = pot1_maxValue_start
+      Pot1_Slider.maxValue = Double(ACHSE1_MAX)
       Pot1_Stepper_H.integerValue = Int(Pot1_Slider.maxValue)
       Pot1_Stepper_H_Feld.integerValue = Int(Pot1_Slider.maxValue)
       
-      Pot1_Slider.minValue = pot1_minValue_start
+      Pot1_Slider.minValue = Double(ACHSE1_START)
       Pot1_Stepper_L.integerValue = Int(Pot1_Slider.minValue)
       Pot1_Stepper_L_Feld.integerValue = Int(Pot1_Slider.minValue)
-      Pot1_Feld_wert.integerValue = Int(UInt16(pot1_maxValue_start ))
-      Pot1_Feld.integerValue = Int(UInt16(Float(pot1_maxValue_start) * FAKTOR1))
-      Pot1_Slider.integerValue = Int(pot1_maxValue_start)
+      Pot1_Feld_wert.integerValue = Int(UInt16(ACHSE1_MAX ))
+      Pot1_Feld.integerValue = Int(UInt16(Float(ACHSE1_MAX) * FAKTOR1))
+      Pot1_Slider.integerValue = Int(ACHSE1_MAX)
       
-      let intpos1 = UInt16(Float(pot1_maxValue_start) * FAKTOR1)
+      let intpos1 = UInt16(Float(ACHSE1_MAX) * FAKTOR1)
       
       teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((intpos1 & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intpos1 & 0x00FF) & 0xFF) // lb
@@ -468,7 +468,7 @@ class rTrigo: rViewController
       
       let pos = sender.floatValue
       Pot1_Feld_wert.integerValue = Int(pos)
-      let intpos = UInt16(pos * FAKTOR0)
+      let intpos = UInt16(pos * FAKTOR1)
       let Istring = formatter.string(from: NSNumber(value: intpos))
       print("report_Slider1 intpos: \(intpos) IString: \(Istring)") 
       Pot1_Feld.integerValue  = Int(intpos)
