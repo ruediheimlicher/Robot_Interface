@@ -63,6 +63,7 @@ open class geom: NSObject
       var phi0:Double = asin((xs-X0)/R0) * 180/Double.pi
       var phi10:Double = acos((Y1-ys)/R1) * 180/Double.pi
       var phi1 = (90 - phi0) + phi10
+      phi1 = phi10 - phi0 // neu: 0 ist verlängerung des Arms
       return (phi0,phi1)
    }
    

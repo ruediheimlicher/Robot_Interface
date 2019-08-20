@@ -72,6 +72,54 @@ class rTrigo: rViewController
       NotificationCenter.default.addObserver(self, selector:#selector(usbstatusAktion(_:)),name:NSNotification.Name(rawValue: "usb_status"),object:nil)
       NotificationCenter.default.addObserver(self, selector:#selector(drehknopfAktion(_:)),name:NSNotification.Name(rawValue: "drehknopf"),object:nil)
 
+      
+      Pot1_Slider.maxValue = pot1_maxValue_start
+      Pot1_Stepper_H.integerValue = Int(Pot1_Slider.maxValue)
+      Pot1_Stepper_H_Feld.integerValue = Int(Pot1_Slider.maxValue)
+      
+      Pot1_Slider.minValue = pot1_minValue_start
+      Pot1_Stepper_L.integerValue = Int(Pot1_Slider.minValue)
+      Pot1_Stepper_L_Feld.integerValue = Int(Pot1_Slider.minValue)
+      Pot1_Feld_wert.integerValue = Int(UInt16(pot1_maxValue_start ))
+      Pot1_Feld.integerValue = Int(UInt16(Float(pot1_maxValue_start) * FAKTOR1))
+      Pot1_Slider.integerValue = Int(pot1_maxValue_start)
+      
+      let intpos1 = UInt16(Float(pot1_maxValue_start) * FAKTOR1)
+      
+      teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((intpos1 & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intpos1 & 0x00FF) & 0xFF) // lb
+
+      
+      Pot2_Slider.maxValue = pot2_maxValue_start
+      Pot2_Stepper_H.integerValue = Int(Pot2_Slider.maxValue)
+      Pot2_Stepper_H_Feld.integerValue = Int(Pot2_Slider.maxValue)
+      
+      Pot2_Slider.minValue = pot2_minValue_start
+      Pot2_Stepper_L.integerValue = Int(Pot2_Slider.minValue)
+      Pot2_Stepper_L_Feld.integerValue = Int(Pot2_Slider.minValue)
+      Pot2_Feld_wert.integerValue = Int(UInt16(pot2_maxValue_start ))
+      Pot2_Feld.integerValue = Int(UInt16(Float(pot2_maxValue_start) * FAKTOR2))
+      Pot2_Slider.integerValue = Int(pot2_maxValue_start)
+    
+      let intpos2 = UInt16(Float(pot2_maxValue_start) * FAKTOR2)
+      teensy.write_byteArray[ACHSE2_BYTE_H] = UInt8((intpos2 & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE2_BYTE_L] = UInt8((intpos2 & 0x00FF) & 0xFF) // lb
+    
+      
+      
+      teensy.write_byteArray[0] = SET_1 // Code
+      
+      if (globalusbstatus > 0)
+      {
+         let senderfolg = teensy.send_USB()
+         print("Trigo viewDidLoad senderfolg: \(senderfolg)")
+      }
+
+/*
+       
+      Pot1_Feld.integerValue = Int(UInt16(Float(ACHSE1_START) * FAKTOR1))
+      */
+      
       Drehknopf_Stepper_H_Feld.integerValue = Int(DrehknopfFeld.maxwinkel)
       Drehknopf_Stepper_H.integerValue = Int(DrehknopfFeld.maxwinkel)
       
@@ -134,8 +182,8 @@ class rTrigo: rViewController
          print("Drehknopf winkel: \(winkel) winkel2: \(winkel2) ***   faktordrehknopf: \(faktordrehknopf) wert: \(wert) achse0: \(achse0)")
          teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((achse0 & 0xFF00) >> 8) // hb
          teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((achse0 & 0x00FF) & 0xFF) // lb
-    //     teensy.write_byteArray[ACHSE3_BYTE_H] = UInt8((intpos & 0xFF00) >> 8) // hb
-     //    teensy.write_byteArray[ACHSE3_BYTE_L] = UInt8((intpos & 0x00FF) & 0xFF) // lb
+   //    teensy.write_byteArray[ACHSE3_BYTE_H] = UInt8((intpos & 0xFF00) >> 8) // hb
+   //    teensy.write_byteArray[ACHSE3_BYTE_L] = UInt8((intpos & 0x00FF) & 0xFF) // lb
  
          if (globalusbstatus > 0)
          {
@@ -419,9 +467,10 @@ class rTrigo: rViewController
       print("report_Slider1 IntVal: \(sender.intValue)")
       
       let pos = sender.floatValue
+      Pot1_Feld_wert.integerValue = Int(pos)
       let intpos = UInt16(pos * FAKTOR0)
       let Istring = formatter.string(from: NSNumber(value: intpos))
-      print("intpos: \(intpos) IString: \(Istring)") 
+      print("report_Slider1 intpos: \(intpos) IString: \(Istring)") 
       Pot1_Feld.integerValue  = Int(intpos)
       
       Pot1_Stepper_L.integerValue  = Int(sender.minValue) // Stepper min setzen
@@ -450,6 +499,7 @@ class rTrigo: rViewController
       Pot1_Slider.minValue = sender.doubleValue 
       print("report_Pot1_Stepper_L Pot1_Slider.minValue: \(Pot1_Slider.minValue)")
       
+      
    }
    
    @IBAction override func report_Pot1_Stepper_H(_ sender: NSStepper)// Obere Grenze
@@ -470,7 +520,7 @@ class rTrigo: rViewController
       print("Trigo report_Slider2 IntVal: \(sender.intValue)")
       
       let pos = sender.floatValue
-      
+      Pot2_Feld_wert.integerValue  = Int(pos)
       let intpos = UInt16(pos * FAKTOR2)
       let Ustring = formatter.string(from: NSNumber(value: intpos))
       
@@ -488,7 +538,7 @@ class rTrigo: rViewController
       if (globalusbstatus > 0)
       {
          let senderfolg = teensy.send_USB()
-         print("report_Slider2 senderfolg: \(senderfolg)")
+         //print("report_Slider2 senderfolg: \(senderfolg)")
       }
    }
 
