@@ -133,6 +133,7 @@ class rBasis: rViewController
    let STEPS_BYTE_H = 26
    let STEPS_BYTE_L = 27
 */
+   var hintergrundfarbe:NSColor = NSColor()
    
    override func viewDidAppear() 
    {
@@ -146,14 +147,21 @@ class rBasis: rViewController
       self.view.window?.acceptsMouseMovedEvents = true
       //let view = view[0] as! NSView
       self.view.wantsLayer = true
-      self.view.layer?.backgroundColor = NSColor.lightGray.cgColor
+      
+      hintergrundfarbe  = NSColor.init(red: 0.25, 
+                                    green: 0.85, 
+                                    blue: 0.85, 
+                                    alpha: 0.25)
+      
+      self.view.layer?.backgroundColor = hintergrundfarbe.cgColor
+      
       formatter.maximumFractionDigits = 1
       formatter.minimumFractionDigits = 2
       formatter.minimumIntegerDigits = 1
       //formatter.roundingMode = .down
       
       let sup = self.view.superview
-      print("DeviceTab superview: \(sup) ident: \(sup?.identifier)")
+      print("DeviceTab superview: \(String(describing: sup)) ident: \(String(describing: sup?.identifier))")
       
       //USB_OK.backgroundColor = NSColor.greenColor()
       // Do any additional setup after loading the view.
@@ -343,7 +351,7 @@ class rBasis: rViewController
          if (usbstatus > 0)
          {
             let senderfolg = teensy.send_USB()
-            //print("report_Slider0 senderfolg: \(senderfolg)")
+            print("joystickAktion senderfolg: \(senderfolg)")
          }
       }
       else
@@ -478,7 +486,8 @@ class rBasis: rViewController
       let Pot0_LO = Pot0_intwert & 0x00FF
       
       print("report_set_Pot0 Pot0_wert: \(Pot0_wert) Pot0 HI: \(Pot0_HI) Pot0 LO: \(Pot0_LO) ")
-      let intpos = sender.intValue 
+      let 
+      intpos = sender.intValue 
       self.Pot0_Slider.floatValue = Pot0_wert //sender.floatValue
       self.Pot0_Stepper_L.floatValue = Pot0_wert//sender.floatValue
       

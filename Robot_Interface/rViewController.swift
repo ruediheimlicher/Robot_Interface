@@ -27,201 +27,10 @@ let ACHSE3_START:UInt16 = 0x7FF // Startwert low
 let ACHSE3_MAX:UInt16 = 0xFFF // Startwert high
 let FAKTOR3:Float = 1.6
 
+let DREHKNOPF_START:UInt16 = 0x7FF
+let FAKTOR_DREHKNOPF:Float = 18.1 // Anpassen auf Mitte bei 3272
 
-class rJoystickView: NSView
-{
-   var weg: NSBezierPath = NSBezierPath()
-   var kreuz: NSBezierPath = NSBezierPath()
-   var achsen: NSBezierPath = NSBezierPath()
-   var mittelpunkt:NSPoint = NSZeroPoint
-   var winkel:CGFloat = 0
-   var hyp:CGFloat = 0
-   required init?(coder  aDecoder : NSCoder) 
-   {
-      super.init(coder: aDecoder)
-      Swift.print("JoystickView init")
-   //   NSColor.blue.set() // choose color
-     // let achsen = NSBezierPath() // container for line(s)
-      let w:CGFloat = bounds.size.width
-      let h:CGFloat = bounds.size.height
-      let mittex:CGFloat = bounds.size.width / 2
-      let mittey:CGFloat = bounds.size.height / 2
-      mittelpunkt = NSMakePoint(mittex, mittey)
-      hyp = bounds.size.height / 2
-      Swift.print("JoystickView init mittex: \(mittex) mittey: \(mittey) hyp: \(hyp)")
-      achsen.move(to: NSMakePoint(0, mittey)) // start point
-      achsen.line(to: NSMakePoint(w, mittey)) // destination
-      achsen.move(to: NSMakePoint(mittex, 0)) // start point
-      achsen.line(to: NSMakePoint(mittex, h)) // destination
-      achsen.lineWidth = 1  // hair line
-      //achsen.stroke()  // draw line(s) in color
-
-   }
-
-   // https://stackoverflow.com/questions/21751105/mac-os-x-convert-between-nsview-coordinates-and-global-screen-coordinates
-   override func draw(_ dirtyRect: NSRect) 
-   {
-      // https://stackoverflow.com/questions/36596545/how-to-draw-a-dash-line-border-for-nsview
-      super.draw(dirtyRect)
-      
-      // dash customization parameters
-      let dashHeight: CGFloat = 1
-      let dashColor: NSColor = .green
-      
-      // setup the context
-      let currentContext = NSGraphicsContext.current()!.cgContext
-      currentContext.setLineWidth(dashHeight)
-      //currentContext.setLineDash(phase: 0, lengths: [dashLength])
-      currentContext.setStrokeColor(dashColor.cgColor)
-      
-      // draw the dashed path
-      currentContext.addRect(bounds.insetBy(dx: dashHeight, dy: dashHeight))
-      currentContext.strokePath()
-      /*
-      NSColor.blue.set() // choose color
-      let achsen = NSBezierPath() // container for line(s)
-      let w:CGFloat = bounds.size.width
-      let h:CGFloat = bounds.size.height
-      let mittex:CGFloat = bounds.size.width / 2
-      let mittey:CGFloat = bounds.size.height / 2
-      achsen.move(to: NSMakePoint(0, mittey)) // start point
-      achsen.line(to: NSMakePoint(w, mittey)) // destination
-      achsen.move(to: NSMakePoint(mittex, 0)) // start point
-      achsen.line(to: NSMakePoint(mittex, h)) // destination
-      achsen.lineWidth = 1  // hair line
-      achsen.stroke()  // draw line(s) in color
-      */
-      NSColor.blue.set() // choose color
-      achsen.stroke() 
-      NSColor.red.set() // choose color
-      kreuz.stroke()
-      NSColor.green.set() // choose color
-      
-      weg.lineWidth = 2
-      weg.stroke()  // draw line(s) in color
-   }
-   
-   override func mouseDown(with theEvent: NSEvent) 
-   {
-      
-      super.mouseDown(with: theEvent)
-      let ident  = self.identifier as! String
- //     Swift.print("left mouse ident: \(ident)")
-      let location = theEvent.locationInWindow
-  //    Swift.print(location)
-  //    NSPoint lokalpunkt = [self convertPoint: [anEvent locationInWindow] fromView: nil];
-      let lokalpunkt = convert(theEvent.locationInWindow, from: nil)
-  //    Swift.print(lokalpunkt)
-
- 
-      // setup the context
-      // setup the context
-      let dashHeight: CGFloat = 1
-      let dashColor: NSColor = .green
-
- 
-  //    NSColor.blue.set() // choose color
-  // https://stackoverflow.com/questions/47738822/simple-drawing-with-mouse-on-cocoa-swift
-      //clearWeg()
-      var userinformation:[String : Any]
-      if kreuz.isEmpty
-      {
-         kreuz.move(to: lokalpunkt)
-         kreuz.line(to: NSMakePoint(lokalpunkt.x, lokalpunkt.y+5))
-         kreuz.line(to: lokalpunkt)
-         kreuz.line(to: NSMakePoint(lokalpunkt.x+5, lokalpunkt.y))
-         kreuz.line(to: lokalpunkt)
-         kreuz.line(to: NSMakePoint(lokalpunkt.x, lokalpunkt.y-5))
-         kreuz.line(to: lokalpunkt)
-         kreuz.line(to: NSMakePoint(lokalpunkt.x-5, lokalpunkt.y))
-         kreuz.line(to: lokalpunkt)
-         weg.move(to: lokalpunkt)
-         
-         userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": 1] as [String : Any]
-         userinformation["ident"] = self.identifier
-      }
-      else
-      {
-         weg.line(to: lokalpunkt)
-         userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": 0] as [String : Any]
-         userinformation["ident"] = self.identifier
-      }
-        
-      let nc = NotificationCenter.default
-      nc.post(name:Notification.Name(rawValue:"joystick"),
-              object: nil,
-              userInfo: userinformation)
-      needsDisplay = true   
-   }
-   
-   override func rightMouseDown(with theEvent: NSEvent) 
-   {
-      self.clearWeg()
-      Swift.print("right mouse")
-      let location = theEvent.locationInWindow
-      Swift.print(location)
-      needsDisplay = true
-   }
- 
-   /*
-   override func mouseDragged(with theEvent: NSEvent) 
-   {
-      Swift.print("mouseDragged")
-      let location = theEvent.locationInWindow
-      //Swift.print(location)
-      var lokalpunkt = convert(theEvent.locationInWindow, from: nil)
-      Swift.print(lokalpunkt)
-      if (lokalpunkt.x >= self.bounds.size.width)
-      {
-         lokalpunkt.x = self.bounds.size.width
-      }
-      if (lokalpunkt.x <= 0)
-      {
-         lokalpunkt.x = 0
-      }
-      
-      if (lokalpunkt.y > self.bounds.size.height)
-      {
-         lokalpunkt.y = self.bounds.size.height
-      }
-      if (lokalpunkt.y <= 0)
-      {
-         lokalpunkt.y = 0
-      }     
-      
-      weg.line(to: lokalpunkt)
-      
-      needsDisplay = true
-      let nc = NotificationCenter.default
-      nc.post(name:Notification.Name(rawValue:"joystick"),
-              object: nil,
-              userInfo: ["message":"mousedrag", "punkt":lokalpunkt, "index": weg.elementCount, "first": -1])
-      
-
-   }
-   */
-   func clearWeg()
-   {
-      weg.removeAllPoints()
-      kreuz.removeAllPoints()
-      needsDisplay = true
- 
-   }
-   /*
-   override func rotate(byDegrees angle: CGFloat) 
-   {
-      var transform = NSAffineTransform()
-      transform.rotate(byDegrees: angle)
-      weg.transform(using: transform as AffineTransform)
-      
-   }
-   */
-   override func keyDown(with theEvent: NSEvent)
-   {
-      Swift.print( "Key Pressed" )
-   }
-   
-  } // rJoystickView
+var globalusbstatus = 0
 
 
 class rZeigerView:NSView
@@ -239,7 +48,7 @@ class rZeigerView:NSView
       let mittey:CGFloat = bounds.size.height / 2
       zeigerpfad.move(to: NSMakePoint(mittex, 0)) // start point
       zeigerpfad.line(to: NSMakePoint(mittex, h))
-//     zeigerpfad.rotateAroundCenter(angle: 10)
+//    zeigerpfad.rotateAroundCenter(angle: 10)
       //zeigerpfad.stroke()
    }
    
@@ -283,202 +92,7 @@ class rZeigerView:NSView
    
 }
 
-var zeigerfeld1 = NSMakeRect(50, 10, 50, 50)
-class rDrehknopfView: rJoystickView
-{
-  // var zeigerfeld = NSMakeRect(10, 10, 10, 10)
-    
-//   var zeiger:rZeigerView = rZeigerView(frame:zeigerfeld1)
-   var ring: NSBezierPath = NSBezierPath()
-   let d:CGFloat = 40; // Durchmesser zeigerbereich
-   var zeigerbereich:NSRect = NSZeroRect
-   var knopfrect:NSRect = NSZeroRect
-  var zeigerpfad: NSBezierPath = NSBezierPath()
-   //var winkel:CGFloat = 0
-   
-   required init?(coder  aDecoder : NSCoder) 
-   {
-      super.init(coder: aDecoder)
-      Swift.print("DrehknopfView init")
-      //   NSColor.blue.set() // choose color
-      // let achsen = NSBezierPath() // container for line(s)
-      /*
-      let w:CGFloat = bounds.size.width
-      let h:CGFloat = bounds.size.height
-      let mittex:CGFloat = bounds.size.width / 2
-      let mittey:CGFloat = bounds.size.height / 2
- */
-      achsen.lineWidth = 1  // hair line
-    
-      knopfrect = bounds
-  //    knopfrect.insetBy(dx: 10, dy: 10)
- //     offsetBy(dx: 5, dy: <#T##CGFloat#>)
-      //knopfrect.offsetBy(dx: -5, dy: -5)
-      let w:CGFloat = knopfrect.size.width
-      let h:CGFloat = knopfrect.size.height
-      let mittex:CGFloat = knopfrect.size.width / 2
-      let mittey:CGFloat = knopfrect.size.height / 2
-      achsen.move(to: NSMakePoint(0, mittey)) // start point
-      achsen.line(to: NSMakePoint(w, mittey)) // destination
-      achsen.move(to: NSMakePoint(mittex, 0)) // start point
-      achsen.line(to: NSMakePoint(mittex, h)) // destination
 
-      
-      weg.appendOval(in: knopfrect)
-      zeigerpfad.move(to: NSMakePoint(mittex, 5)) // start point
-      zeigerpfad.line(to: NSMakePoint(mittex, h-12)) // destination
-      zeigerpfad.line(to: NSMakePoint(mittex-5, h-18)) // destination
-      
-      zeigerpfad.move(to: NSMakePoint(mittex+5, h-18)) // destination
-      zeigerpfad.line(to: NSMakePoint(mittex, h-12)) // destination
-      
-      zeigerpfad.lineWidth = 2 
-  //    var zeigerfeld = zeigerpfad.bounds
-  //    var zeigerrand:NSBezierPath = NSBezierPath()
-   //   zeigerrand.appendRect(zeigerfeld)
-   //   zeigerrand.move(to: NSMakePoint(mittex, 10))
-    //  zeigerpfad.rotateAroundCenter(angle:10)
-   //   zeigerbereich = zeigerpfad.bounds
-      zeigerbereich = NSMakeRect(zeigerpfad.currentPoint.x - d/2, zeigerpfad.currentPoint.y - d/2,d,d)
-      
-      weg.appendOval(in: bounds)
-//      Swift.print("zeiger bounds vor origin x: \(zeiger.bounds.origin.x) y: \(zeiger.bounds.origin.y) size h: \(zeiger.bounds.height) w: \(zeiger.bounds.width)")
-//      Swift.print("zeiger frame vor origin x: \(zeiger.frame.origin.x) y: \(zeiger.frame.origin.y) size h: \(zeiger.frame.height) w: \(zeiger.frame.width)")
-
-   //   zeiger.setFeld(feld: self.bounds)
-   //    addSubview(zeiger)
-      
- //     Swift.print("zeiger bounds nach origin x: \(zeiger.bounds.origin.x) y: \(zeiger.bounds.origin.y) size h: \(zeiger.bounds.height) w: \(zeiger.bounds.width)")
-  //    Swift.print("zeiger frame nach origin x: \(zeiger.frame.origin.x) y: \(zeiger.frame.origin.y) size h: \(zeiger.frame.height) w: \(zeiger.frame.width)")
-
-  //    zeigerpfad.rotateAroundCenter(angle: 45)
-      //weg.rotateAroundCenter(angle: -17)
-      
-   
-   }
-   
-   
-    
-   override func mouseDown(with theEvent: NSEvent) 
-   {
-      
-      super.mouseDown(with: theEvent)
-//          Swift.print("Drehknopf left mouse")
-      let location = theEvent.locationInWindow
-      //    Swift.print(location)
-      //    NSPoint lokalpunkt = [self convertPoint: [anEvent locationInWindow] fromView: nil];
-      let lokalpunkt = convert(theEvent.locationInWindow, from: nil)
-      //    Swift.print(lokalpunkt)
-      
-      /*
-      if NSPointInRect(lokalpunkt,zeigerbereich)
-      {
-         Swift.print("Klick ok")
-         
-         
-         
-         zeigerpfad.rotateAroundCenterB(angle:10)
-         zeigerbereich = NSMakeRect(zeigerpfad.currentPoint.x - d/2, zeigerpfad.currentPoint.y - d/2,d,d)
-      }
-      */
-      
-      if weg.contains(lokalpunkt)
-      {
- //        Swift.print("contains ok ")
-         let currentx = lokalpunkt.x
-         let currenty = lokalpunkt.y
-         //let x = pow(Float(lokalpunkt.x) ,2)
-         var spiegeln:CGFloat = 1 // Bereich rechts
-         var addwinkel:CGFloat = 0
-         if (lokalpunkt.x < mittelpunkt.x)
-         {
-            spiegeln = -1
-            addwinkel = 180
-         }
-         
-         let newhyp = CGFloat(sqrt(pow((Float(lokalpunkt.y)-Float(mittelpunkt.y)),2) + pow((Float(lokalpunkt.x) - Float(mittelpunkt.x)),2)))
-         
-         
-         
-         var newarc = (lokalpunkt.y - mittelpunkt.y) / newhyp
-        
-         let newwinkel = asin(newarc) * 180 / CGFloat(Double.pi) //* spiegeln
-     //    Swift.print("md lokalpunkt.x:\t \(lokalpunkt.x)\t lokalpunkt.y: \t\(lokalpunkt.y) \tmittelpunkt.x: \t\(mittelpunkt.x)  \tmittelpunkt.y: \t\(mittelpunkt.y)\t newhyp:\t \(newhyp) \tnewarc: \t\(newarc) \tnewwinkel: \t\(newwinkel) \twinkel: \t\(winkel)")
-         Swift.print("md newhyp: \(newhyp) winkel: \(winkel) newarc: \(newarc) newwinkel: \(newwinkel)")
-
-         zeigerpfad.rotateAroundCenterB(angle:(newwinkel - winkel) )
-         
-         
-         zeigerbereich = NSMakeRect(zeigerpfad.currentPoint.x - d/2, zeigerpfad.currentPoint.y - d/2,d,d)
-      
-      }
-     
-      
-   }
-   // https://stackoverflow.com/questions/21751105/mac-os-x-convert-between-nsview-coordinates-and-global-screen-coordinates
-   override func draw(_ dirtyRect: NSRect) 
-   {
-      // https://stackoverflow.com/questions/36596545/how-to-draw-a-dash-line-border-for-nsview
- //     super.draw(dirtyRect)
-       
-      // dash customization parameters
-      let dashHeight: CGFloat = 1
-      let dashColor: NSColor = .green
-      
-      // setup the context
-      let currentContext = NSGraphicsContext.current()!.cgContext
-      //currentContext.setLineWidth(dashHeight)
-      //currentContext.setLineDash(phase: 0, lengths: [dashLength])
-     // currentContext.setStrokeColor(dashColor.cgColor)
-      
-      // draw the dashed path
-   //   currentContext.addRect(bounds.insetBy(dx: dashHeight, dy: dashHeight))
-  //    currentContext.strokePath()
-      /*
-       NSColor.blue.set() // choose color
-       let achsen = NSBezierPath() // container for line(s)
-       let w:CGFloat = bounds.size.width
-       let h:CGFloat = bounds.size.height
-       let mittex:CGFloat = bounds.size.width / 2
-       let mittey:CGFloat = bounds.size.height / 2
-       achsen.move(to: NSMakePoint(0, mittey)) // start point
-       achsen.line(to: NSMakePoint(w, mittey)) // destination
-       achsen.move(to: NSMakePoint(mittex, 0)) // start point
-       achsen.line(to: NSMakePoint(mittex, h)) // destination
-       achsen.lineWidth = 1  // hair line
-       achsen.stroke()  // draw line(s) in color
-       */
-      NSColor.blue.set() // choose color
-//      achsen.rotateAroundCenter(angle: 10)
- //     achsen.stroke() 
-      NSColor.red.set() // choose color
- //     kreuz.stroke()
-      NSColor.green.set() // choose color
-      
-      weg.lineWidth = 2
-      weg.stroke()  // draw line(s) in color
-      NSColor.red.set() // choose color
-      zeigerpfad.stroke()
-      var zeigerrand:NSBezierPath = NSBezierPath(rect:zeigerbereich)
-      zeigerrand.stroke()
- 
-      
-       
-//      zeigerrandB.stroke()
-     
-      let currentx = zeigerpfad.currentPoint.x
-      let currenty = zeigerpfad.currentPoint.y
-      hyp = CGFloat(sqrt(pow((Float(currenty)-Float(mittelpunkt.y)),2) + pow((Float(currentx) - Float(mittelpunkt.x)),2)))
-      
-     let arc = (currenty - mittelpunkt.y) / hyp
-      winkel = asin(arc) * 180 / CGFloat(Double.pi)
-  //    Swift.print("draw currentx: \t\(currentx) \tcurrenty: \t\(currenty) \tmittelpunkt.x: \t\(mittelpunkt.x)  \tmittelpunkt.y: \t\(mittelpunkt.y)\t hyp:\t\(hyp)\t newarc: \t\(arc) \tnewwinkel: \t\(winkel) \twinkel: \t\(winkel)")
-      Swift.print("draw hyp: \(hyp) winkel: \(winkel) arc: \(arc) ")
-
-      //Swift.print("currentx: \(currentx) currenty: \(currenty) winkel: \(winkel)")
-      needsDisplay = true
-   } // draw
-} // DerhknopfView
 struct position
 {
    var x:UInt16 = 0
@@ -529,16 +143,16 @@ class rServoPfad
       return Int(pfadarray.count)
    }
    
-
 }
 
 //MARK: TABVIEW
 class rDeviceTabViewController: NSTabViewController 
 {
+   
    override func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) 
    {
       let identifier:String = tabViewItem?.identifier as! String
-      print("DeviceTab identifier: \(String(describing: identifier))")
+      print("DeviceTab identifier: \(String(describing: identifier)) usbstatus: \(globalusbstatus)")
     // let sup = self.view.superview
      // print("DeviceTab superview: \(sup) ident: \(sup?.identifier)")
    //let supsup = self.view.superview?.superview
@@ -552,16 +166,29 @@ class rDeviceTabViewController: NSTabViewController
               object: nil,
               userInfo: userinformation)
  
+      userinformation = ["message":"usb"] as [String : Any]
+      /*
+      nc.post(name:Notification.Name(rawValue:"usb_status"),
+              object: nil,
+              userInfo: userinformation)
+*/
    }
-   
+ 
 }
 
 //MARK: ViewController
 class rViewController: NSViewController, NSWindowDelegate
 {
    
+   // Robot
+   var z0:Float = 30 // Hoehe Drehpunkt 0
+   var l0:Float = 1// laenge Arm 0
+   var l1:Float = 1 // laenge Arm 1
+   var l2:Float = 1 // laenge Arm 2
    
-   
+   var phi0:Float = 0 // Winkel Arm 0 von Senkrechte
+   var phi1:Float = 0 // Winkel Arm 1
+   var phi2:Float = 0 // Winkel Arm 2
    // var  myUSBController:USBController
    // var usbzugang:
    var usbstatus: Int32 = 0
@@ -572,74 +199,9 @@ class rViewController: NSViewController, NSWindowDelegate
    
    var selectedDevice:String = ""
    
+   var hgfarbe  = NSColor()
    
-   
-   @IBOutlet weak var Device: NSTabView!
-   @IBOutlet weak var manufactorer: NSTextField!
-   @IBOutlet weak var Counter: NSTextField!
-   
-   @IBOutlet weak var Start_Knopf: NSButton!
-   @IBOutlet weak var Stop_Knopf: NSButton!
-   @IBOutlet weak var Send_Knopf: NSButton!
-   @IBOutlet weak var Start_Read_Knopf: NSButton!
-   
-   @IBOutlet weak var Anzeige: NSTextField!
-   
-   @IBOutlet weak var USB_OK: NSOutlineView!
-   
-   @IBOutlet weak var check_USB_Knopf: NSButton!
-
-   
-   //@IBOutlet weak var start_read_USB_Knopf: NSButtonCell!
-   
-   @IBOutlet weak var codeFeld: NSTextField!
-   
-   @IBOutlet weak var dataFeld: NSTextField!
-   
-   @IBOutlet weak var schrittweiteFeld: NSTextField!
-   
-   @IBOutlet weak var Pot0_Feld: NSTextField!
-   @IBOutlet weak var Pot0_Slider: NSSlider!
-   @IBOutlet weak var Pot0_Stepper_H: NSStepper!
-   @IBOutlet weak var Pot0_Stepper_L: NSStepper!
-   @IBOutlet weak var Pot0_Stepper_L_Feld: NSTextField!
-   @IBOutlet weak var Pot0_Stepper_H_Feld: NSTextField!
   
-   @IBOutlet weak var joystick_x: NSTextField!
-   @IBOutlet weak var joystick_y: NSTextField!
-
-   @IBOutlet weak var goto_x: NSTextField!
-   @IBOutlet weak var goto_x_Stepper: NSStepper!
-   @IBOutlet weak var goto_y: NSTextField!
-   @IBOutlet weak var goto_y_Stepper: NSStepper!
-   
-   @IBOutlet weak var Pot1_Feld: NSTextField!
-   @IBOutlet weak var Pot1_Slider: NSSlider!
-   @IBOutlet weak var Pot1_Stepper_H: NSStepper!
-   @IBOutlet weak var Pot1_Stepper_L: NSStepper!
-   @IBOutlet weak var Pot1_Stepper_L_Feld: NSTextField!
-   @IBOutlet weak var Pot1_Stepper_H_Feld: NSTextField!
-
-
-   @IBOutlet weak var Pot2_Feld: NSTextField!
-   @IBOutlet weak var Pot2_Slider: NSSlider!
-   @IBOutlet weak var Pot2_Stepper: NSStepper!
-   @IBOutlet weak var Pot2_Stepper_H: NSStepper!
-   @IBOutlet weak var Pot2_Stepper_L: NSStepper!
-   @IBOutlet weak var Pot2_Stepper_L_Feld: NSTextField!
-   @IBOutlet weak var Pot2_Stepper_H_Feld: NSTextField!
-
-   @IBOutlet weak var Pot3_Feld: NSTextField!
-   @IBOutlet weak var Pot3_Slider: NSSlider!
-   @IBOutlet weak var Pot3_Stepper: NSStepper!
-   @IBOutlet weak var Pot3_Stepper_H: NSStepper!
-   @IBOutlet weak var Pot3_Stepper_L: NSStepper!
-   @IBOutlet weak var Pot3_Stepper_L_Feld: NSTextField!
-   @IBOutlet weak var Pot3_Stepper_H_Feld: NSTextField!
-
-   @IBOutlet weak var Joystickfeld: rJoystickView!
-   @IBOutlet weak var clear_Ring: NSButton!
-   
    
    var formatter = NumberFormatter()
    
@@ -649,50 +211,7 @@ class rViewController: NSViewController, NSWindowDelegate
 
    
    
-   // const fuer USB
-   let SET_0:UInt8 = 0xA1
-   let SET_1:UInt8 = 0xB1
-   
-   let SET_2:UInt8 = 0xC1
-   let SET_3:UInt8 = 0xD1
-
-   let SET_ROB:UInt8 = 0xA2
-   
-   let SET_P:UInt8 = 0xA3
-   let GET_P:UInt8 = 0xB3
-
-   let SIN_START:UInt8 = 0xE0
-   let SIN_END:UInt8 = 0xE1
-   
-   
-   
-   
-   let U_DIVIDER:Float = 9.8
-   let ADC_REF:Float = 3.26
-   
-   let ACHSE0_BYTE_H = 4
-   let ACHSE0_BYTE_L = 5
-
-   let ACHSE1_BYTE_H = 6
-   let ACHSE1_BYTE_L = 7
-   
-   
-   let ACHSE2_BYTE_H = 16
-   let ACHSE2_BYTE_L = 17
-   
-   
-   let ACHSE3_BYTE_H = 18
-   let ACHSE3_BYTE_L = 19
-   
-   let HYP_BYTE_H = 22 // Hypotenuse
-   let HYP_BYTE_L = 23
-   
-   let INDEX_BYTE_H = 24
-   let INDEX_BYTE_L = 25
-   
-   let STEPS_BYTE_H = 26
-   let STEPS_BYTE_L = 27
-
+ 
    override func viewDidLoad()
    {
       super.viewDidLoad()
@@ -968,7 +487,7 @@ class rViewController: NSViewController, NSWindowDelegate
       let intpos = UInt16(pos * FAKTOR0)
       let Ustring = formatter.string(from: NSNumber(value: intpos))
       
-      //print("report_Slider0 pos: \(pos) intpos: \(intpos)  Ustring: \(Ustring ?? "0")")
+      print("report_Slider0 pos: \(pos) intpos: \(intpos)  Ustring: \(Ustring ?? "0")")
      // Pot0_Feld.stringValue  = Ustring!
       Pot0_Feld.integerValue  = Int(intpos)
       Pot0_Stepper_L.integerValue  = Int(sender.minValue) // Stepper min setzen
@@ -1325,6 +844,21 @@ class rViewController: NSViewController, NSWindowDelegate
          //print("report_Slider2 senderfolg: \(senderfolg)")
       }
    }
+   @IBAction  func report_Pot2_Stepper_H(_ sender: NSStepper) // untere Grenze
+   {
+      print("report_Pot2_Stepper_H IntVal: \(sender.integerValue)")
+   }
+   @IBAction  func report_Pot2_Stepper_L(_ sender: NSStepper) // untere Grenze
+   {
+      print("report_Pot2_Stepper_L IntVal: \(sender.integerValue)")
+
+   }
+   
+   @IBAction  func report_Slider3(_ sender: NSSlider)
+   {
+      teensy.write_byteArray[0] = SET_3 // Code 
+      print("report_Slider3 IntVal: \(sender.intValue)")
+   }
 
 
    @IBAction func report_set_Pot1(_ sender: AnyObject)
@@ -1332,9 +866,15 @@ class rViewController: NSViewController, NSWindowDelegate
       
    }
 
+   @IBAction  func report_Pot3_Stepper_L(_ sender: NSStepper) // untere Grenze
+   {
+   }
+   @IBAction  func report_Pot3_Stepper_H(_ sender: NSStepper)// Obere Grenze
+   {
+      print("report_Pot3_Stepper_H IntVal: \(sender.integerValue)")
+   }
    
-   
-   
+    
    @IBAction func report_start_read_USB(_ sender: AnyObject)
    {
       //myUSBController.startRead(1)
@@ -1385,6 +925,7 @@ class rViewController: NSViewController, NSWindowDelegate
       }
       let erfolg = teensy.USBOpen()
       usbstatus = erfolg
+      globalusbstatus = Int(erfolg)
       print("USBOpen erfolg: \(erfolg) usbstatus: \(usbstatus)")
       
       if (rawhid_status()==1)
@@ -1564,6 +1105,117 @@ class rViewController: NSViewController, NSWindowDelegate
          // Update the view, if already loaded.
       }
    }
+   
+   
+   //MARK: Konstanten
+   // const fuer USB
+   let SET_0:UInt8 = 0xA1
+   let SET_1:UInt8 = 0xB1
+   
+   let SET_2:UInt8 = 0xC1
+   let SET_3:UInt8 = 0xD1
+   
+   let SET_ROB:UInt8 = 0xA2
+   
+   let SET_P:UInt8 = 0xA3
+   let GET_P:UInt8 = 0xB3
+   
+   let SIN_START:UInt8 = 0xE0
+   let SIN_END:UInt8 = 0xE1
+   
+   let U_DIVIDER:Float = 9.8
+   let ADC_REF:Float = 3.26
+   
+   let ACHSE0_BYTE_H = 4
+   let ACHSE0_BYTE_L = 5
+   
+   let ACHSE1_BYTE_H = 6
+   let ACHSE1_BYTE_L = 7
+   
+   let ACHSE2_BYTE_H = 16
+   let ACHSE2_BYTE_L = 17
+   
+   let ACHSE3_BYTE_H = 18
+   let ACHSE3_BYTE_L = 19
+   
+   let HYP_BYTE_H = 22 // Hypotenuse
+   let HYP_BYTE_L = 23
+   
+   let INDEX_BYTE_H = 24
+   let INDEX_BYTE_L = 25
+   
+   let STEPS_BYTE_H = 26
+   let STEPS_BYTE_L = 27
+  
+   
+   //MARK:      Outlets 
+   @IBOutlet weak var Device: NSTabView!
+   @IBOutlet weak var manufactorer: NSTextField!
+   @IBOutlet weak var Counter: NSTextField!
+   
+   @IBOutlet weak var Start_Knopf: NSButton!
+   @IBOutlet weak var Stop_Knopf: NSButton!
+   @IBOutlet weak var Send_Knopf: NSButton!
+   @IBOutlet weak var Start_Read_Knopf: NSButton!
+   
+   @IBOutlet weak var Anzeige: NSTextField!
+   
+   @IBOutlet weak var USB_OK: NSOutlineView!
+   
+   @IBOutlet weak var check_USB_Knopf: NSButton!
+   
+   
+   //@IBOutlet weak var start_read_USB_Knopf: NSButtonCell!
+   
+   @IBOutlet weak var codeFeld: NSTextField!
+   
+   @IBOutlet weak var dataFeld: NSTextField!
+   
+   @IBOutlet weak var schrittweiteFeld: NSTextField!
+   
+   @IBOutlet weak var Pot0_Feld: NSTextField!
+   @IBOutlet weak var Pot0_Slider: NSSlider!
+   @IBOutlet weak var Pot0_Stepper_H: NSStepper!
+   @IBOutlet weak var Pot0_Stepper_L: NSStepper!
+   @IBOutlet weak var Pot0_Stepper_L_Feld: NSTextField!
+   @IBOutlet weak var Pot0_Stepper_H_Feld: NSTextField!
+   
+   @IBOutlet weak var joystick_x: NSTextField!
+   @IBOutlet weak var joystick_y: NSTextField!
+   
+   @IBOutlet weak var goto_x: NSTextField!
+   @IBOutlet weak var goto_x_Stepper: NSStepper!
+   @IBOutlet weak var goto_y: NSTextField!
+   @IBOutlet weak var goto_y_Stepper: NSStepper!
+   
+   @IBOutlet weak var Pot1_Feld_wert: NSTextField!
+   @IBOutlet weak var Pot1_Feld: NSTextField!
+   @IBOutlet weak var Pot1_Slider: NSSlider!
+   @IBOutlet weak var Pot1_Stepper_H: NSStepper!
+   @IBOutlet weak var Pot1_Stepper_L: NSStepper!
+   @IBOutlet weak var Pot1_Stepper_L_Feld: NSTextField!
+   @IBOutlet weak var Pot1_Stepper_H_Feld: NSTextField!
+   
+   @IBOutlet weak var Pot2_Feld_wert: NSTextField!
+   @IBOutlet weak var Pot2_Feld: NSTextField!
+   @IBOutlet weak var Pot2_Slider: NSSlider!
+   @IBOutlet weak var Pot2_Stepper: NSStepper!
+   @IBOutlet weak var Pot2_Stepper_H: NSStepper!
+   @IBOutlet weak var Pot2_Stepper_L: NSStepper!
+   @IBOutlet weak var Pot2_Stepper_L_Feld: NSTextField!
+   @IBOutlet weak var Pot2_Stepper_H_Feld: NSTextField!
+   
+   @IBOutlet weak var Pot3_Feld: NSTextField!
+   @IBOutlet weak var Pot3_Slider: NSSlider!
+   @IBOutlet weak var Pot3_Stepper: NSStepper!
+   @IBOutlet weak var Pot3_Stepper_H: NSStepper!
+   @IBOutlet weak var Pot3_Stepper_L: NSStepper!
+   @IBOutlet weak var Pot3_Stepper_L_Feld: NSTextField!
+   @IBOutlet weak var Pot3_Stepper_H_Feld: NSTextField!
+   
+   @IBOutlet weak var Joystickfeld: rJoystickView!
+   
+   @IBOutlet weak var clear_Ring: NSButton!
    
    
 }
