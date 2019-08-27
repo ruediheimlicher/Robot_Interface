@@ -27,8 +27,10 @@ class rDrehknopfView: rJoystickView
    var mitterect:NSRect = NSZeroRect
    var mittepfad: NSBezierPath = NSBezierPath()
    
-   var maxwinkel:CGFloat = 70
-   var minwinkel:CGFloat = -70
+   var maxwinkel:CGFloat = 80
+   var minwinkel:CGFloat = -80
+   
+   var lastwinkelpunkt: NSPoint = NSZeroPoint
    
    required init?(coder  aDecoder : NSCoder) 
    {
@@ -105,6 +107,20 @@ class rDrehknopfView: rJoystickView
       //    NSPoint lokalpunkt = [self convertPoint: [anEvent locationInWindow] fromView: nil];
       let lokalpunkt = convert(theEvent.locationInWindow, from: nil)
       //    Swift.print(lokalpunkt)
+      var identstring = ""
+      
+      let ident  = self.identifier
+      if let rawident:String = ident?.rawValue
+      {
+         identstring = rawident
+      }
+      else
+      {
+         identstring = "13"
+         
+      }
+
+      
       var userinformation:[String : Any]
       var winkelpunkt = NSZeroPoint
       
@@ -171,7 +187,7 @@ class rDrehknopfView: rJoystickView
          
       }
       userinformation = ["message":"mousedown", "punkt": winkelpunkt, "index": weg.elementCount, "first": -1] as [String : Any]
-      userinformation["ident"] = self.identifier
+      userinformation["ident"] = identstring
       
       let nc = NotificationCenter.default
       nc.post(name:Notification.Name(rawValue:"drehknopf"),
@@ -192,6 +208,22 @@ class rDrehknopfView: rJoystickView
       var winkelpunkt = NSZeroPoint
       Swift.print(lokalpunkt)
       
+      zeigerpfad.removeAllPoints()
+      let mittex:CGFloat = knopfrect.size.width / 2
+      let mittey:CGFloat = knopfrect.size.height / 2
+      let w:CGFloat = knopfrect.size.width
+      let h:CGFloat = knopfrect.size.height
+    
+      
+      zeigerpfad.move(to: NSMakePoint(mittex, 12)) // start point
+      zeigerpfad.line(to: NSMakePoint(mittex, knopfrect.size.height-12)) // destination
+      zeigerpfad.line(to: NSMakePoint(mittex-5, knopfrect.size.height-18)) // destination
+      
+      zeigerpfad.move(to: NSMakePoint(mittex+5, knopfrect.size.height-18)) // destination
+      zeigerpfad.line(to: NSMakePoint(mittex, knopfrect.size.height-12)) // destination
+      
+      zeigerpfad.lineWidth = 3 
+     
       if ring.contains( lokalpunkt) // Klick im Kreis
       {
          Swift.print("Drehknopf mouseDragged punkt inside")
@@ -201,23 +233,11 @@ class rDrehknopfView: rJoystickView
          var newwinkel = asin(newarc) * 180 / CGFloat(Double.pi)  //
          //Swift.print("Drehknopf newwinkel: \(newwinkel)  maxwinkel: \(maxwinkel) minwinkel: \(minwinkel)")
          
-         zeigerpfad.removeAllPoints()
-         
-         let mittex:CGFloat = knopfrect.size.width / 2
-         let mittey:CGFloat = knopfrect.size.height / 2
-         let w:CGFloat = knopfrect.size.width
-         let h:CGFloat = knopfrect.size.height
          
          
+          
          
-         zeigerpfad.move(to: NSMakePoint(mittex, 12)) // start point
-         zeigerpfad.line(to: NSMakePoint(mittex, knopfrect.size.height-12)) // destination
-         zeigerpfad.line(to: NSMakePoint(mittex-5, knopfrect.size.height-18)) // destination
          
-         zeigerpfad.move(to: NSMakePoint(mittex+5, knopfrect.size.height-18)) // destination
-         zeigerpfad.line(to: NSMakePoint(mittex, knopfrect.size.height-12)) // destination
-         
-         zeigerpfad.lineWidth = 3 
          
          if (lokalpunkt.x > mittelpunkt.x)
          {
@@ -241,6 +261,7 @@ class rDrehknopfView: rJoystickView
             }
             winkelpunkt.y = -1
          }
+         lastwinkelpunkt = winkelpunkt
          zeigerpfad.rotateAroundCenterB(angle:winkelpunkt.x )
          
          //winkelpunkt.x = (newwinkel - 90)
@@ -249,8 +270,11 @@ class rDrehknopfView: rJoystickView
       else
       {
          Swift.print("Drehknopf mouseDragged punkt outside")
+         winkelpunkt = lastwinkelpunkt 
+         zeigerpfad.rotateAroundCenterB(angle:winkelpunkt.x )
          
       }
+      
       Swift.print("Drehknopf mouseDragged winkelpunkt: \(winkelpunkt)")
       needsDisplay = true
       userinformation = ["message":"mousedown", "punkt": winkelpunkt, "index": weg.elementCount, "first": -1] as [String : Any]
@@ -260,8 +284,7 @@ class rDrehknopfView: rJoystickView
       nc.post(name:Notification.Name(rawValue:"drehknopf"),
               object: nil,
               userInfo: userinformation)
-      
-      
+            
    }
    
    // https://stackoverflow.com/questions/21751105/mac-os-x-convert-between-nsview-coordinates-and-global-screen-coordinates

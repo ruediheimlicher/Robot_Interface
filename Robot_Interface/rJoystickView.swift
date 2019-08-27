@@ -36,6 +36,15 @@ class rJoystickView: NSView
       achsen.line(to: NSMakePoint(mittex, h)) // destination
       achsen.lineWidth = 1  // hair line
       //achsen.stroke()  // draw line(s) in color
+      if let joystickident = self.identifier
+      {
+         Swift.print("JoystickView ident: \(joystickident) raw: \(joystickident.rawValue)")
+         
+      }
+      else
+      {
+         Swift.print("JoystickView no ident")
+      }
       
    }
    
@@ -50,7 +59,7 @@ class rJoystickView: NSView
       let dashColor: NSColor = .gray
       
       // setup the context
-      let currentContext = NSGraphicsContext.current()!.cgContext
+      let currentContext = NSGraphicsContext.current!.cgContext
       currentContext.setLineWidth(dashHeight)
       //currentContext.setLineDash(phase: 0, lengths: [dashLength])
       currentContext.setStrokeColor(dashColor.cgColor)
@@ -86,8 +95,21 @@ class rJoystickView: NSView
    {
       
       super.mouseDown(with: theEvent)
-      let ident  = self.identifier as! String
+      //let ident  = self.identifier as! String
+       let ident  = self.identifier
+      
       Swift.print("left mouse ident: \(ident)")
+      var identstring = ""
+      if let rawident:String = ident?.rawValue
+      {
+         identstring = rawident
+      }
+      else
+      {
+         identstring = "13"
+      
+      }
+      
       let location = theEvent.locationInWindow
       //    Swift.print(location)
       //    NSPoint lokalpunkt = [self convertPoint: [anEvent locationInWindow] fromView: nil];
@@ -118,8 +140,8 @@ class rJoystickView: NSView
          kreuz.line(to: lokalpunkt)
          weg.move(to: lokalpunkt)
          
-         userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": 1] as [String : Any]
-         userinformation["ident"] = self.identifier
+         userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": 1, "ident" :identstring] as [String : Any]
+         //userinformation["ident"] = self.identifier
       }
       else
       {

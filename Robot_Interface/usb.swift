@@ -247,7 +247,7 @@ open class usb_teensy: NSObject
     }
     */
    
-   open func cont_read_USB(_ timer: Timer)
+   @objc open func cont_read_USB(_ timer: Timer)
    {
       //print("*cont_read_USB read_OK: \(read_OK)")
       if (read_OK).boolValue

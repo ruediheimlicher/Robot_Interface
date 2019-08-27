@@ -32,36 +32,39 @@ open class geom: NSObject
       super.init()
    }
 
-   open func armwinkel(X0:Double, Y0:Double, R0:Double, X1:Double, Y1:Double, R1:Double )->(Double,Double)
+   open func armwinkel(absz0:Double, ord0:Double, rad0:Double, absz1:Double, ord1:Double, rad1:Double )->(Double,Double)
    {
       
-      // Berechnung fuer 2-teiligen Arm. X0, Y0: Koord Startpunkt, X1, Y1: Endpunkte in Ebene des Arms
+      // Berechnung fuer 2-teiligen Arm. absz0, ord00: Koord Startpunkt, absz1, ord1: Endpunkte in Ebene des Arms
      
       // Gelenk des Arms
       // erster Schnittpunkt 
-      var xs0:Double = 0 
-      var ys0:Double = 0 
+      var absz_s0:Double = 0 
+      var ord_s0:Double = 0 
 
       // zweiter Schnittpunkt
-      var xs1:Double = 0 
-      var ys1:Double = 0 
+      var absz_s1:Double = 0 
+      var ord_s1:Double = 0 
       
       //kreispunkte()
       //var xx = kreispunkte()
-      var result = circle_circle_intersection(X0,Y0,R0,X1,Y1,R1,&xs0, &ys0, &xs1, &ys1)
-      
-      // Koord oberer Punkt:
-      var xs:Double = xs0
-      var ys:Double = ys0
-      if (ys1 > ys0)
+      var result = circle_circle_intersection(absz0,ord0,rad0,absz1,ord1,rad1,&absz_s0, &ord_s0, &absz_s1, &ord_s1)
+      if (result == 0)
       {
-         xs = xs1
-         ys = ys1
+         return (0,0)
+      }
+      // Koord oberer Punkt:
+      var xs:Double = absz_s0
+      var ys:Double = ord_s0
+      if (ord_s1 > ord_s0)
+      {
+         xs = absz_s1
+         ys = ord_s1
       }
       
       // Winkel:
-      var phi0:Double = asin((xs-X0)/R0) * 180/Double.pi
-      var phi10:Double = acos((Y1-ys)/R1) * 180/Double.pi
+      var phi0:Double = asin((xs-absz0)/rad0) * 180/Double.pi
+      var phi10:Double = acos((ord1-ys)/rad1) * 180/Double.pi
       var phi1 = (90 - phi0) + phi10
       phi1 = phi10 - phi0 // neu: 0 ist verlängerung des Arms
       return (phi0,phi1)

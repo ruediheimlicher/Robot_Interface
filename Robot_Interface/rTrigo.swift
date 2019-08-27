@@ -15,10 +15,17 @@ class rTrigo: rViewController
  
    
    @IBOutlet weak var Drehknopf_Feld: NSTextField!
+   @IBOutlet weak var Drehknopf_Feld_wert: NSTextField!
+   
    @IBOutlet weak var Drehknopf_Stepper_H: NSStepper!
    @IBOutlet weak var Drehknopf_Stepper_L: NSStepper!
    @IBOutlet weak var Drehknopf_Stepper_L_Feld: NSTextField!
    @IBOutlet weak var Drehknopf_Stepper_H_Feld: NSTextField!
+   
+   @IBOutlet weak var x1_Slider: NSSlider!
+   @IBOutlet weak var y1_Slider: NSSlider!
+   @IBOutlet weak var z1_Slider: NSSlider!
+   
    
    @IBOutlet weak var arm: NSButton!
    
@@ -36,8 +43,21 @@ class rTrigo: rViewController
  
    @IBOutlet weak var armwinkel0: NSTextField!
    @IBOutlet weak var armwinkel1: NSTextField!
+   @IBOutlet weak var rotwinkel: NSTextField!
+   
+   @IBOutlet weak var pos0Feld: NSTextField!
+   @IBOutlet weak var pos1Feld: NSTextField!
+   @IBOutlet weak var pos2Feld: NSTextField!
+   
+   @IBOutlet weak var intpos0Feld: NSTextField!
+   @IBOutlet weak var intpos1Feld: NSTextField!
+   @IBOutlet weak var intpos2Feld: NSTextField!
+   
+
 
    var hintergrundfarbe = NSColor()
+   
+   var lastwinkel:CGFloat = 3272
    
    var geometrie = geom()
    
@@ -90,24 +110,27 @@ class rTrigo: rViewController
       teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intpos1 & 0x00FF) & 0xFF) // lb
 
       
-      Pot2_Slider.maxValue = pot2_maxValue_start
+      Pot2_Slider.maxValue = Double(ACHSE2_MAX)
       Pot2_Stepper_H.integerValue = Int(Pot2_Slider.maxValue)
       Pot2_Stepper_H_Feld.integerValue = Int(Pot2_Slider.maxValue)
       
-      Pot2_Slider.minValue = pot2_minValue_start
+      Pot2_Slider.minValue = Double(ACHSE2_START)
       Pot2_Stepper_L.integerValue = Int(Pot2_Slider.minValue)
       Pot2_Stepper_L_Feld.integerValue = Int(Pot2_Slider.minValue)
-      Pot2_Feld_wert.integerValue = Int(UInt16(pot2_maxValue_start ))
-      Pot2_Feld.integerValue = Int(UInt16(Float(pot2_maxValue_start) * FAKTOR2))
-      Pot2_Slider.integerValue = Int(pot2_maxValue_start)
+      Pot2_Feld_wert.integerValue = Int(UInt16(ACHSE2_MAX ))
+      Pot2_Feld.integerValue = Int(UInt16(Float(ACHSE2_MAX) * FAKTOR2))
+      Pot2_Slider.integerValue = Int(ACHSE2_MAX)
     
-      let intpos2 = UInt16(Float(pot2_maxValue_start) * FAKTOR2)
+      let intpos2 = UInt16(Float(ACHSE2_MAX) * FAKTOR2)
       teensy.write_byteArray[ACHSE2_BYTE_H] = UInt8((intpos2 & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE2_BYTE_L] = UInt8((intpos2 & 0x00FF) & 0xFF) // lb
     
+      let achse0 = 3272
+      teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((achse0 & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((achse0 & 0x00FF) & 0xFF) // lb
+
       
-      
-      teensy.write_byteArray[0] = SET_1 // Code
+      teensy.write_byteArray[0] = SET_ROB // Code
       
       if (globalusbstatus > 0)
       {
@@ -132,6 +155,13 @@ class rTrigo: rViewController
       
    }
    
+   @nonobjc override func windowShouldClose(_ sender: Any) 
+   {
+      print("Trigo windowShouldClose")
+      NSApplication.shared.terminate(self)
+   }
+
+   
    @objc func usbstatusAktion(_ notification:Notification) 
    {
       let info = notification.userInfo
@@ -143,7 +173,8 @@ class rTrigo: rViewController
    @objc  func drehknopfAktion(_ notification:Notification) 
    {
       print("Trigo drehknopfAktion usbstatus:\t \(usbstatus)  globalusbstatus: \(globalusbstatus) selectedDevice: \(selectedDevice) ident: \(String(describing: self.view.identifier))")
-      if (selectedDevice == self.view.identifier)
+      let sel = NSUserInterfaceItemIdentifier(selectedDevice)
+      if (sel == self.view.identifier)
       {
          
 
@@ -151,40 +182,37 @@ class rTrigo: rViewController
          teensy.write_byteArray[0] = DREHKNOPF
          
          let info = notification.userInfo
-         let ident = Int(info?["ident"] as! String)
+         
+         // ident als String: s. joystickaktion
+    //     let ident = Int(info?["ident"] as! String) 
          let punkt:CGPoint = info?["punkt"] as! CGPoint
 
-         let winkel = (punkt.x )
-         
-         let winkel2 = Int(10*(winkel + 180))
-         
-         
+         let winkel = (punkt.x ) // Winkel in Grad. Nullpunkt senkrecht
+         let winkel2 = Int(10*(winkel + 180)) // 
          Drehknopf_Feld.integerValue = Int(winkel)
          let h = Double(Joystickfeld.bounds.size.height)
-         //let faktorh:Double = (Pot1_Slider.maxValue - Pot1_Slider.minValue) / h
          let randbereich = abs(DrehknopfFeld.minwinkel) + abs(DrehknopfFeld.maxwinkel)
-         let faktordrehknopf = 360/(360 - randbereich )
+         let drehknopfnormierung = 360/(360 - randbereich )
          
          // minwinkel ist negativ von Scheitelpunkt aus
-         let wert = CGFloat(Float((winkel + 180 + (DrehknopfFeld.minwinkel))*faktordrehknopf) * FAKTOR_DREHKNOPF) // red auf 0
-         
+         let wert = CGFloat(Float((winkel + 180 + (DrehknopfFeld.minwinkel))*drehknopfnormierung) * DREHKNOPF_FAKTOR) // red auf 0
+         Drehknopf_Feld_wert.integerValue = Int(wert)
          var achse0:UInt16 = 0
          if (wert > 0)
          {
             achse0 =  UInt16(wert)
+            lastwinkel = wert
          }
          else
          {
-            achse0 = 0
+            //achse0 = UInt16(lastwinkel)
          }
         
          
-         print("Drehknopf winkel: \(winkel) winkel2: \(winkel2) ***   faktordrehknopf: \(faktordrehknopf) wert: \(wert) achse0: \(achse0)")
+         print("Drehknopf winkel: \(winkel) winkel2: \(winkel2) ***   drehknopfnormierung: \(drehknopfnormierung) wert: \(wert) achse0: \(achse0)")
          teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((achse0 & 0xFF00) >> 8) // hb
          teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((achse0 & 0x00FF) & 0xFF) // lb
-   //    teensy.write_byteArray[ACHSE3_BYTE_H] = UInt8((intpos & 0xFF00) >> 8) // hb
-   //    teensy.write_byteArray[ACHSE3_BYTE_L] = UInt8((intpos & 0x00FF) & 0xFF) // lb
- 
+  
          if (globalusbstatus > 0)
          {
             let senderfolg = teensy.send_USB()
@@ -197,29 +225,46 @@ class rTrigo: rViewController
    @objc override func joystickAktion(_ notification:Notification) 
    {
   //    print("Trigo joystickAktion usbstatus:\t \(usbstatus)  selectedDevice: \(selectedDevice) ident: \(String(describing: self.view.identifier))")
-      
-      if (selectedDevice == self.view.identifier)
+      let sel = NSUserInterfaceItemIdentifier.init(selectedDevice)
+     //  if (selectedDevice == self.view.identifier)
+      var ident = ""
+      if (sel == self.view.identifier)
       {
   //       print("Trigo joystickAktion passt")
          
-         let info = notification.userInfo
-         let ident = Int(info?["ident"] as! String)
+         var ident = "13"
+         let info = notification.userInfo 
+         if let joystickident = info?["ident"]as? String
+         {
+            print("Trigo joystickAktion ident da: \(joystickident)")
+           ident = joystickident
+         }
+         else
+         {
+            print("Trigo joystickAktion ident nicht da")
+         }
+        // let id = NSUserInterfaceItemIdentifier.init(rawValue:(info?["ident"] as! NSString) as String)
+        
+         
+      //   let ident = "aa" //info["ident"] as! String 
          let punkt:CGPoint = info?["punkt"] as! CGPoint
          
          
          let wegindex:Int = info?["index"] as! Int // 
          let first:Int = info?["first"] as! Int
-   //      print("Trigo joystickAktion:\t \(punkt)")
+  
+ //      print("Trigo joystickAktion:\t \(punkt)")
    //      print("x: \(punkt.x) y: \(punkt.y) index: \(wegindex) first: \(first) ident: \(ident)")
          
-         if ident == 2001 // Drehknopf
+         
+         if ident == "2001" // Drehknopf
          {
             print("Drehknopf ident 2001")
             teensy.write_byteArray[0] = DREHKNOPF
             let winkel = Int(punkt.x )
             print("Drehknopf winkel: \(winkel)")
          }
-         else if ident == 2000
+         else if ident == "2000"
          {
             
             teensy.write_byteArray[0] = SET_ROB // Code 
@@ -276,7 +321,7 @@ class rTrigo: rViewController
                
                teensy.write_byteArray[0] = SET_RING
                let anz = servoPfad?.anzahlPunkte()
-               print("joystickAktion anz: \(anz)")
+               print("joystickAktion anz: \(String(describing: anz))")
                if (wegindex > 1)
                {
                   print("")
@@ -345,15 +390,81 @@ class rTrigo: rViewController
    
    //MARK Geometrie
    
-    @IBAction  func report_armwinkel(_ sender: NSButton)
+   func checkgeometrie() -> Bool
+   {
+      let hypoxy:Float = hypotf((endx.floatValue - startx.floatValue), (endy.floatValue - starty.floatValue))
+      let hypoz :Float = hypotf(hypoxy,(endz.floatValue - startz.floatValue))
+      if (hypoz > (arm0.floatValue + arm1.floatValue))
+      {
+         return false
+      }
+      return true
+   }
+   
+ 
+   //MARK: Armwinkel
+ 
+   @IBAction  func report_armwinkel(_ sender: NSButton)
     {
-      var winkeltup = winkelvonpunkt(x: 12, y: 16, z: 30)
+      if (checkgeometrie() == true)
+      {
+         var winkeltup = winkelvonpunkt3D(x: endx.doubleValue, y: endy.doubleValue, z: endz.doubleValue)
          print("report_armwinkel winkelvonpunkt: \(winkeltup)")
-      armwinkel0.doubleValue = winkeltup.0
-      armwinkel1.doubleValue = winkeltup.1
+         armwinkel0.doubleValue = winkeltup.0
+         armwinkel1.doubleValue = winkeltup.1
+         rotwinkel.doubleValue = winkeltup.2
+         
+         // set Robot
+         teensy.write_byteArray[0] = SET_ROB // Code
+         
+         // Armwinkel 0
+         var pos0:Float = Float((180 - winkeltup.0 ) * 10)
+         pos0Feld.integerValue = Int(pos0)
+         let intpos0 = UInt16((pos0) * ROB_FAKTOR0)
+         print("set robot achse0 pos0: \(pos0) intpos0: \(intpos0)") 
+         intpos0Feld.integerValue = Int(intpos0)
+         teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((intpos0 & 0xFF00) >> 8) // hb
+         teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((intpos0 & 0x00FF) & 0xFF) // lb
+
+         
+         // Armwinkel 1
+         var pos1:Float = Float((180 - winkeltup.1 ) * 10)
+         pos1Feld.integerValue = Int(pos1)
+         let intpos1 = UInt16((pos1) * ROB_FAKTOR1)
+         print("set robot achse1 pos1: \(pos1) intpos1: \(intpos1)") 
+         intpos1Feld.integerValue = Int(intpos1)
+         teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((intpos1 & 0xFF00) >> 8) // hb
+         teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intpos1 & 0x00FF) & 0xFF) // lb
+
+         // Rotwinkel
+         var pos2:Float = Float((180 - winkeltup.2 ) * 10)
+         pos2Feld.integerValue = Int(pos2)
+         let intpos2 = UInt16((pos2) * ROB_FAKTOR2)
+         print("set robot achse2 pos2: \(pos2) intpos2: \(intpos2)") 
+         intpos2Feld.integerValue = Int(intpos2)
+         teensy.write_byteArray[ACHSE2_BYTE_H] = UInt8((intpos2 & 0xFF00) >> 8) // hb
+         teensy.write_byteArray[ACHSE2_BYTE_L] = UInt8((intpos2 & 0x00FF) & 0xFF) // lb
+         
+         if (globalusbstatus > 0)
+         {
+            let senderfolg = teensy.send_USB()
+            
+         }
+
+        // setAchse1(pos:Float((180 - winkeltup.1 ) * 10))
+      }
+      else
+      {
+         print("Geometrie hat keine Lösung")
+         armwinkel0.stringValue = "---"
+         armwinkel1.stringValue = "---"
+         rotwinkel.stringValue = "-"
+
+      }
       
    }
    
+   // nur 2 Dim: x,z. y1 alz z benutzt
     func winkelvonpunkt( x:Double  ,  y:Double,   z:Double) -> (Double, Double)
       {
          var phi0:Double , phi1:Double 
@@ -362,6 +473,10 @@ class rTrigo: rViewController
       //   let arm0:Double = 75
       //   let arm1:Double = 65
          var x0:Double = startx.doubleValue, y0:Double = startz.doubleValue, r0:Double = arm0.doubleValue, x1:Double = endx.doubleValue, y1:Double = endz.doubleValue, r1:Double = arm1.doubleValue 
+         
+      //   x1 = x
+      //   y1 = y
+    //     z1 = z
          var xi0:Double = 0, yi0:Double = 0, xi1: Double = 0, yi1:Double = 0, xi11: Double = 0, yi11:Double = 0
          /*
           int circle_circle_intersection(double x0, double y0, double r0,
@@ -372,11 +487,56 @@ class rTrigo: rViewController
           */
       //   var resultat = circle_circle_intersection(0, 0, arm0, x, y, arm1, &xi1, &yi1, &xi11, &yi11)
          
-         var robotarmwinkel:(Double,Double) = geometrie.armwinkel(X0: x0 , Y0: y0, R0: r0, X1: x1, Y1: y1, R1: r1)
+         var robotarmwinkel:(Double,Double) = geometrie.armwinkel(absz0: x0 , ord0: y0, rad0: r0, absz1: x1, ord1: y1, rad1: r1)
          print("robotarmwinkel: \(robotarmwinkel)")
      //    Swift.print("
          return (robotarmwinkel.0, robotarmwinkel.1)
    }
+   
+   func winkelvonpunkt3D( x:Double  ,  y:Double,   z:Double) -> (Double, Double, Double)
+   {
+      var phi0:Double , phi1:Double ,phi2:Double
+      phi0 = 13
+      phi1 = 17
+      phi2 = 10
+      //   let arm0:Double = 75
+      //   let arm1:Double = 65
+      
+      // Werte aus Eingabefeldern
+      var x0:Double = startx.doubleValue, y0:Double = starty.doubleValue, z0:Double = startz.doubleValue, r0:Double = arm0.doubleValue, r1:Double = arm1.doubleValue
+      
+      
+      var x1:Double = endx.doubleValue, y1:Double = endy.doubleValue, z1:Double = endz.doubleValue 
+      
+      // Diagonale x,y:
+      var diagxy:Float = hypotf((Float(x1-x0)),Float(y1-y0))
+      
+      // winkel um z-achse 90° ist ri y-achse
+      var phiz0:Float = asin(Float(x1-x0)/diagxy) * 180/(Float.pi)
+      
+      let phiz = 90 - phiz0
+      //   x1 = x
+      //   y1 = y
+      //     z1 = z
+      // Ergebnisse 
+      var xi0:Double = 0, yi0:Double = 0, xi1: Double = 0, yi1:Double = 0, xi11: Double = 0, yi11:Double = 0
+      /*
+       int circle_circle_intersection(double x0, double y0, double r0,
+       double x1, double y1, double r1,
+       double *xi, double *yi,
+       double *xi_prime, double *yi_prime)
+       
+       */
+      //   var resultat = circle_circle_intersection(0, 0, arm0, x, y, arm1, &xi1, &yi1, &xi11, &yi11)
+      
+      var robotarmwinkel:(Double,Double) = geometrie.armwinkel(absz0: x0 , ord0: z0, rad0: r0, absz1: Double(diagxy), ord1: z1, rad1: r1)
+      print("diagxy: \(diagxy) robotarmwinkel.0: \(robotarmwinkel.0) robotarmwinkel.1: \(robotarmwinkel.1) phiz0: \(phiz0) phiz: \(phiz)")
+      //    Swift.print("
+      return (robotarmwinkel.0, robotarmwinkel.1,Double(phiz0))
+      //return (robotarmwinkel.0, robotarmwinkel.1)
+   }
+
+   
    
    //MARK: Slider 0
    @IBAction override func report_Slider0(_ sender: NSSlider)
@@ -391,7 +551,7 @@ class rTrigo: rViewController
       
       //print("report_Slider0 pos: \(pos) intpos: \(intpos)  Ustring: \(Ustring ?? "0")")
       // Pot0_Feld.stringValue  = Ustring!
-      Pot0_Feld.integerValue  = Int(intpos)
+      Pot0_Feld.integerValue = Int(intpos)
       Pot0_Stepper_L.integerValue  = Int(sender.minValue) // Stepper min setzen
       Pot0_Stepper_L_Feld.integerValue = Int(sender.minValue)
       Pot0_Stepper_H.integerValue  = Int(sender.maxValue) // Stepper max setzen
@@ -459,6 +619,34 @@ class rTrigo: rViewController
       }
    }
    
+   //MARK: xyz-Slider
+   
+   @IBAction  func report_x1_Slider(_ sender: NSSlider)
+   {
+      teensy.write_byteArray[0] = SET_1 // Code
+      print("report_x1_Slider IntVal: \(sender.intValue)")
+      endx.integerValue = sender.integerValue
+      
+   
+   }
+
+   @IBAction  func report_y1_Slider(_ sender: NSSlider)
+   {
+      teensy.write_byteArray[0] = SET_1 // Code
+      print("report_y1_Slider IntVal: \(sender.intValue)")
+      endy.integerValue = sender.integerValue
+      
+      
+   }
+
+   @IBAction  func report_z1_Slider(_ sender: NSSlider)
+   {
+      teensy.write_byteArray[0] = SET_1 // Code
+      print("report_z1_Slider IntVal: \(sender.intValue)")
+      endz.integerValue = sender.integerValue
+      
+      
+   }
    
    // MARK:Slider 1
    @IBAction override func report_Slider1(_ sender: NSSlider)
@@ -469,8 +657,8 @@ class rTrigo: rViewController
       let pos = sender.floatValue
       Pot1_Feld_wert.integerValue = Int(pos)
       let intpos = UInt16(pos * FAKTOR1)
-      let Istring = formatter.string(from: NSNumber(value: intpos))
-      print("report_Slider1 intpos: \(intpos) IString: \(Istring)") 
+ //     let Istring = formatter.string(from: NSNumber(value: intpos))
+      print("report_Slider1 pos: \(pos) intpos: \(intpos) ") 
       Pot1_Feld.integerValue  = Int(intpos)
       
       Pot1_Stepper_L.integerValue  = Int(sender.minValue) // Stepper min setzen
@@ -478,15 +666,34 @@ class rTrigo: rViewController
       Pot1_Stepper_H.integerValue  = Int(sender.maxValue) // Stepper max setzen
       Pot1_Stepper_H_Feld.integerValue = Int(sender.maxValue)
       
-      
-      
+      setAchse1(pos: pos)
+       return
       teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((intpos & 0xFF00) >> 8) // hb
       teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intpos & 0x00FF) & 0xFF) // lb
       
       if (globalusbstatus > 0)
       {
          let senderfolg = teensy.send_USB()
+        
       }
+   }
+   
+   @objc func setAchse1(pos: Float)
+   {
+      print("setAchse1 pos: \(pos)")
+      teensy.write_byteArray[0] = SET_1 // Code
+      let intpos = UInt16((pos) * FAKTOR1)
+      teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((intpos & 0xFF00) >> 8) // hb
+      teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intpos & 0x00FF) & 0xFF) // lb
+      
+      if (globalusbstatus > 0)
+      {
+         let senderfolg = teensy.send_USB()
+         
+      }
+
+      
+      
    }
    
    @IBAction override func report_Pot1_Stepper_L(_ sender: NSStepper) // untere Grenze

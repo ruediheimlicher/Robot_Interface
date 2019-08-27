@@ -1078,7 +1078,7 @@ class rViewController: NSViewController, NSWindowDelegate
    @nonobjc func windowShouldClose(_ sender: Any) 
    {
       print("windowShouldClose")
-      NSApplication.shared().terminate(self)
+      NSApplication.shared.terminate(self)
    }
    
    override var representedObject: Any? 
