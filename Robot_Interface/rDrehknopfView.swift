@@ -27,8 +27,9 @@ class rDrehknopfView: rJoystickView
    var mitterect:NSRect = NSZeroRect
    var mittepfad: NSBezierPath = NSBezierPath()
    
-   var maxwinkel:CGFloat = 80
-   var minwinkel:CGFloat = -80
+   // Winkelbereich Drehknopf
+   var maxwinkel:CGFloat = 90
+   var minwinkel:CGFloat = -90
    
    var lastwinkelpunkt: NSPoint = NSZeroPoint
    
@@ -200,7 +201,7 @@ class rDrehknopfView: rJoystickView
    
    override func mouseDragged(with theEvent: NSEvent) 
    {
-      Swift.print("Drehknopf mouseDragged")
+    //  Swift.print("Drehknopf mouseDragged")
       let location = theEvent.locationInWindow
       //Swift.print(location)
       var lokalpunkt = convert(theEvent.locationInWindow, from: nil)
@@ -226,12 +227,12 @@ class rDrehknopfView: rJoystickView
      
       if ring.contains( lokalpunkt) // Klick im Kreis
       {
-         Swift.print("Drehknopf mouseDragged punkt inside")
+         //Swift.print("Drehknopf mouseDragged punkt inside")
          let newhyp = CGFloat(sqrt(pow((Float(lokalpunkt.y)-Float(mittelpunkt.y)),2) + pow((Float(lokalpunkt.x) - Float(mittelpunkt.x)),2)))
          var newarc = (lokalpunkt.y - mittelpunkt.y) / newhyp
          
          var newwinkel = asin(newarc) * 180 / CGFloat(Double.pi)  //
-         //Swift.print("Drehknopf newwinkel: \(newwinkel)  maxwinkel: \(maxwinkel) minwinkel: \(minwinkel)")
+         Swift.print("Drehknopf newwinkel: \(newwinkel)  maxwinkel: \(maxwinkel) minwinkel: \(minwinkel)")
          
          
          
@@ -275,7 +276,7 @@ class rDrehknopfView: rJoystickView
          
       }
       
-      Swift.print("Drehknopf mouseDragged winkelpunkt: \(winkelpunkt)")
+      //Swift.print("Drehknopf mouseDragged winkelpunkt: \(winkelpunkt)")
       needsDisplay = true
       userinformation = ["message":"mousedown", "punkt": winkelpunkt, "index": weg.elementCount, "first": -1] as [String : Any]
       userinformation["ident"] = self.identifier

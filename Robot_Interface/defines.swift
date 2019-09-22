@@ -17,17 +17,17 @@ let DREHKNOPF:UInt8 = 0xAA
 let ACHSE0_START:UInt16 = 0x7FF // Startwert low
 let ACHSE0_MAX:UInt16 = 0xFFF // Startwert high
 let FAKTOR0:Float = 1.6
-let ROB_FAKTOR0:Float = 1.6
+
 
 let ACHSE1_START:UInt16 = 600 // Startwert low
-let ACHSE1_MAX:UInt16 = 1800 // Startwert high
-let FAKTOR1:Float = 2.6
-let ROB_FAKTOR1:Float = 2.6
+let ACHSE1_MAX:UInt16 = 2100 // Startwert high
+let FAKTOR1:Float = 1.6
+
 
 let ACHSE2_START:UInt16 = 300 // Startwert low
 let ACHSE2_MAX:UInt16 = 1800 // Startwert high
 let FAKTOR2:Float = 1.6
-let ROB_FAKTOR2:Float = 2.75
+
 
 let ACHSE3_START:UInt16 = 0x7FF // Startwert low
 let ACHSE3_MAX:UInt16 = 0xFFF // Startwert high

@@ -428,7 +428,7 @@ open class usb_teensy: NSObject
          
          if hid_usbstatus == 0
          {
-            print("hid_usbstatus 0: \(hid_usbstatus)")
+            //print("hid_usbstatus 0: \(hid_usbstatus)")
          }
          else
          {

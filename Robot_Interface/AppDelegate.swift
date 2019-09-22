@@ -18,8 +18,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
        //self.window.acceptsMouseMovedEvents = true
    }
 
+   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply
+
+   {
+      print("applicationShouldTerminate") 
+      let nc = NotificationCenter.default
+      nc.post(name:Notification.Name(rawValue:"beenden"),
+              object: nil,
+              userInfo: nil)
+      
+      return .terminateNow
+   }
+   
+
    func applicationWillTerminate(_ aNotification: Notification) {
       // Insert code here to tear down your application
+      print("applicationWillTerminate") 
    }
 
 

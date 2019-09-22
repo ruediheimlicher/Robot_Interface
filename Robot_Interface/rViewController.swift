@@ -191,8 +191,17 @@ class rViewController: NSViewController, NSWindowDelegate
    var achse0_start:UInt16  = ACHSE0_START;
    var achse0_max:UInt16   = ACHSE0_MAX;
 
+   var robotPList = UserDefaults.standard 
+   let defaults = UserDefaults.standard
    
-   
+   // https://learnappmaking.com/plist-property-list-swift-how-to/
+   struct Preferences: Codable {
+      var webserviceURL:String
+      var itemsPerPage:Int
+      var backupEnabled:Bool
+      var robot1_offset:Int
+   }
+
  
    override func viewDidLoad()
    {
@@ -212,7 +221,46 @@ class rViewController: NSViewController, NSWindowDelegate
       NotificationCenter.default.addObserver(self, selector:#selector(newDataAktion(_:)),name:newdataname,object:nil)
       NotificationCenter.default.addObserver(self, selector:#selector(joystickAktion(_:)),name:NSNotification.Name(rawValue: "joystick"),object:nil)
       NotificationCenter.default.addObserver(self, selector:#selector(tabviewAktion(_:)),name:NSNotification.Name(rawValue: "tabview"),object:nil)
+      NotificationCenter.default.addObserver(self, selector: #selector(beendenAktion), name:NSNotification.Name(rawValue: "beenden"), object: nil)
 
+      
+      
+      defaults.set(25, forKey: "Age")
+      defaults.set(true, forKey: "UseTouchID")
+      defaults.set(CGFloat.pi, forKey: "Pi")
+      
+      defaults.set("Paul Hudson", forKey: "Name")
+      defaults.set(Date(), forKey: "LastRun")
+      
+      let name = "John Doe"
+      let robot1 = 300
+//      robotPList.set(name, forKey: "name")
+      robotPList.set(robot1, forKey: "robot1")
+      
+      
+      var preferences = Preferences(webserviceURL: "https://api.twitter.com", itemsPerPage: 12, backupEnabled: false,robot1_offset: 300)
+      
+      preferences.robot1_offset = 400
+ 
+      
+      let encoder = PropertyListEncoder()
+      encoder.outputFormat = .xml
+      
+      let path = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Robot/Preferences.plist")
+      
+      do {
+         let data = try encoder.encode(preferences)
+         try data.write(to: path)
+      } catch {
+         print(error)
+      }
+     
+      if  let path        = Bundle.main.path(forResource: "Preferences", ofType: "plist"),
+         let xml         = FileManager.default.contents(atPath: path),
+         let preferences = try? PropertyListDecoder().decode(Preferences.self, from: xml)
+      {
+         print(preferences.webserviceURL)
+      }
       
       // servoPfad
       servoPfad?.setStartposition(x: 0x800, y: 0x800, z: 0)
@@ -266,6 +314,14 @@ class rViewController: NSViewController, NSWindowDelegate
      */
    }
    
+   @objc func beendenAktion(_ notification:Notification) 
+   {
+      
+      print("beendenAktion")
+      
+      
+      
+   }
    @objc func tabviewAktion(_ notification:Notification) 
    {
       let info = notification.userInfo
@@ -606,6 +662,7 @@ class rViewController: NSViewController, NSWindowDelegate
    
    @IBAction func report_Slider1(_ sender: NSSlider)
    {
+
       teensy.write_byteArray[0] = SET_1 // Code
       print("report_Slider1 IntVal: \(sender.intValue)")
       
@@ -803,7 +860,6 @@ class rViewController: NSViewController, NSWindowDelegate
    {
       teensy.write_byteArray[0] = SET_3 // Code 
       //print("report_Slider2 IntVal: \(sender.intValue)")
-      
       let pos = sender.floatValue
       
       let intpos = UInt16(pos * FAKTOR3)
@@ -1088,6 +1144,18 @@ class rViewController: NSViewController, NSWindowDelegate
       }
    }
    
+   func getPlist(withName name: String) -> [String]?
+   {
+      // https://learnappmaking.com/plist-property-list-swift-how-to/
+      if  let path = Bundle.main.path(forResource: name, ofType: "plist"),
+         let xml = FileManager.default.contents(atPath: path)
+      {
+         return (try? PropertyListSerialization.propertyList(from: xml, options: .mutableContainersAndLeaves, format: nil)) as? [String]
+      }
+      
+      return nil
+   }
+   
    
    //MARK: Konstanten
    // const fuer USB
@@ -1110,24 +1178,36 @@ class rViewController: NSViewController, NSWindowDelegate
    
    let ACHSE0_BYTE_H = 4
    let ACHSE0_BYTE_L = 5
+   let ACHSE0_START_BYTE_H = 6
+   let ACHSE0_START_BYTE_L = 7
+
    
-   let ACHSE1_BYTE_H = 6
-   let ACHSE1_BYTE_L = 7
+   let ACHSE1_BYTE_H = 11
+   let ACHSE1_BYTE_L = 12
+   let ACHSE1_START_BYTE_H = 13
+   let ACHSE1_START_BYTE_L = 14
+  
+   let ACHSE2_BYTE_H = 17
+   let ACHSE2_BYTE_L = 18
+   let ACHSE2_START_BYTE_H = 19
+   let ACHSE2_START_BYTE_L = 20
    
-   let ACHSE2_BYTE_H = 16
-   let ACHSE2_BYTE_L = 17
+   let ACHSE3_BYTE_H = 23
+   let ACHSE3_BYTE_L = 24
+   let ACHSE3_START_BYTE_H = 25
+   let ACHSE3_START_BYTE_L = 26
+
+   let HYP_BYTE_H = 32 // Hypotenuse
+   let HYP_BYTE_L = 33
    
-   let ACHSE3_BYTE_H = 18
-   let ACHSE3_BYTE_L = 19
+   let INDEX_BYTE_H = 34
+   let INDEX_BYTE_L = 35
    
-   let HYP_BYTE_H = 22 // Hypotenuse
-   let HYP_BYTE_L = 23
+   let STEPS_BYTE_H = 36
+   let STEPS_BYTE_L = 37
    
-   let INDEX_BYTE_H = 24
-   let INDEX_BYTE_L = 25
    
-   let STEPS_BYTE_H = 26
-   let STEPS_BYTE_L = 27
+   
   
    
    //MARK:      Outlets 
@@ -1161,6 +1241,7 @@ class rViewController: NSViewController, NSWindowDelegate
    @IBOutlet weak var Pot0_Stepper_L: NSStepper!
    @IBOutlet weak var Pot0_Stepper_L_Feld: NSTextField!
    @IBOutlet weak var Pot0_Stepper_H_Feld: NSTextField!
+   @IBOutlet weak var Pot0_Inverse_Check: NSButton!
    
    @IBOutlet weak var joystick_x: NSTextField!
    @IBOutlet weak var joystick_y: NSTextField!
@@ -1170,15 +1251,16 @@ class rViewController: NSViewController, NSWindowDelegate
    @IBOutlet weak var goto_y: NSTextField!
    @IBOutlet weak var goto_y_Stepper: NSStepper!
    
-   @IBOutlet weak var Pot1_Feld_wert: NSTextField!
+   @IBOutlet weak var Pot1_Feld_raw: NSTextField!
    @IBOutlet weak var Pot1_Feld: NSTextField!
    @IBOutlet weak var Pot1_Slider: NSSlider!
    @IBOutlet weak var Pot1_Stepper_H: NSStepper!
    @IBOutlet weak var Pot1_Stepper_L: NSStepper!
    @IBOutlet weak var Pot1_Stepper_L_Feld: NSTextField!
    @IBOutlet weak var Pot1_Stepper_H_Feld: NSTextField!
+   @IBOutlet weak var Pot1_Inverse_Check: NSButton!
    
-   @IBOutlet weak var Pot2_Feld_wert: NSTextField!
+   @IBOutlet weak var Pot2_Feld_raw: NSTextField!
    @IBOutlet weak var Pot2_Feld: NSTextField!
    @IBOutlet weak var Pot2_Slider: NSSlider!
    @IBOutlet weak var Pot2_Stepper: NSStepper!
@@ -1186,7 +1268,9 @@ class rViewController: NSViewController, NSWindowDelegate
    @IBOutlet weak var Pot2_Stepper_L: NSStepper!
    @IBOutlet weak var Pot2_Stepper_L_Feld: NSTextField!
    @IBOutlet weak var Pot2_Stepper_H_Feld: NSTextField!
+   @IBOutlet weak var Pot2_Inverse_Check: NSButton!
    
+   @IBOutlet weak var Pot3_Feld_raw: NSTextField!
    @IBOutlet weak var Pot3_Feld: NSTextField!
    @IBOutlet weak var Pot3_Slider: NSSlider!
    @IBOutlet weak var Pot3_Stepper: NSStepper!
@@ -1194,6 +1278,7 @@ class rViewController: NSViewController, NSWindowDelegate
    @IBOutlet weak var Pot3_Stepper_L: NSStepper!
    @IBOutlet weak var Pot3_Stepper_L_Feld: NSTextField!
    @IBOutlet weak var Pot3_Stepper_H_Feld: NSTextField!
+   @IBOutlet weak var Pot3_Inverse_Check: NSButton!
    
    @IBOutlet weak var Joystickfeld: rJoystickView!
    
@@ -1210,23 +1295,23 @@ extension NSBezierPath
       let midv = NSMidY(self.bounds)/2
       let center = NSMakePoint(midh, midv)
       var transform = NSAffineTransform()
- //     transform.rotate(byDegrees: angle)
- //     self.transform(using: transform as AffineTransform)
-  
+      //     transform.rotate(byDegrees: angle)
+      //     self.transform(using: transform as AffineTransform)
+      
       let originBounds:NSRect = NSMakeRect(NSZeroPoint.x, NSZeroPoint.y , self.bounds.size.width, self.bounds.size.height )
       Swift.print("rotateAround bounds vor rotate origin x: \(self.bounds.origin.x) y: \(self.bounds.origin.y) size h: \(self.bounds.height) w: \(self.bounds.width)")
-
+      
       transform = NSAffineTransform()
-     transform.translateX(by: +(NSWidth(originBounds) / 2 ), yBy: +(NSHeight(originBounds) / 2))
+      transform.translateX(by: +(NSWidth(originBounds) / 2 ), yBy: +(NSHeight(originBounds) / 2))
       transform.rotate(byDegrees: angle)
       transform.translateX(by: -(NSWidth(originBounds) / 2 ), yBy: -(NSHeight(originBounds) / 2))
-
+      
       //   transform = transform.rotated(by: angle)
-   //   transform = transform.translatedBy(x: -center.x, y: -center.y)
+      //   transform = transform.translatedBy(x: -center.x, y: -center.y)
       self.transform(using:transform as AffineTransform)
       
       Swift.print("rotateAround bounds nach rotate origin x: \(self.bounds.origin.x) y: \(self.bounds.origin.y) size h: \(self.bounds.height) w: \(self.bounds.width)")
-
+      
    }
    
    // https://stackoverflow.com/questions/50012606/how-to-rotate-uibezierpath-around-center-of-its-own-bounds
