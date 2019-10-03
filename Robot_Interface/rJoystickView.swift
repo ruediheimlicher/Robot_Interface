@@ -20,7 +20,7 @@ class rJoystickView: NSView
    required init?(coder  aDecoder : NSCoder) 
    {
       super.init(coder: aDecoder)
-      Swift.print("JoystickView init")
+      //Swift.print("JoystickView init")
       //   NSColor.blue.set() // choose color
       // let achsen = NSBezierPath() // container for line(s)
       let w:CGFloat = bounds.size.width
@@ -29,7 +29,7 @@ class rJoystickView: NSView
       let mittey:CGFloat = bounds.size.height / 2
       mittelpunkt = NSMakePoint(mittex, mittey)
       hyp = bounds.size.height / 2
-      Swift.print("JoystickView init mittex: \(mittex) mittey: \(mittey) hyp: \(hyp)")
+      //Swift.print("JoystickView init mittex: \(mittex) mittey: \(mittey) hyp: \(hyp)")
       achsen.move(to: NSMakePoint(0, mittey)) // start point
       achsen.line(to: NSMakePoint(w, mittey)) // destination
       achsen.move(to: NSMakePoint(mittex, 0)) // start point
@@ -38,7 +38,7 @@ class rJoystickView: NSView
       //achsen.stroke()  // draw line(s) in color
       if let joystickident = self.identifier
       {
-         Swift.print("JoystickView ident: \(joystickident) raw: \(joystickident.rawValue)")
+       //  Swift.print("JoystickView ident: \(joystickident) raw: \(joystickident.rawValue)")
          
       }
       else
@@ -130,6 +130,7 @@ class rJoystickView: NSView
       if kreuz.isEmpty
       {
          kreuz.move(to: lokalpunkt)
+         // kreuz zeichnen
          kreuz.line(to: NSMakePoint(lokalpunkt.x, lokalpunkt.y+5))
          kreuz.line(to: lokalpunkt)
          kreuz.line(to: NSMakePoint(lokalpunkt.x+5, lokalpunkt.y))
@@ -138,6 +139,8 @@ class rJoystickView: NSView
          kreuz.line(to: lokalpunkt)
          kreuz.line(to: NSMakePoint(lokalpunkt.x-5, lokalpunkt.y))
          kreuz.line(to: lokalpunkt)
+      
+         // zurueck zu localpunkt
          weg.move(to: lokalpunkt)
          
          userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": 1, "ident" :identstring] as [String : Any]
@@ -146,8 +149,9 @@ class rJoystickView: NSView
       else
       {
          weg.line(to: lokalpunkt)
-         userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": 0] as [String : Any]
-         userinformation["ident"] = self.identifier
+         
+         userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": 0, "ident" :identstring] as [String : Any]
+         //userinformation["ident"] = self.identifier
       }
       
       let nc = NotificationCenter.default

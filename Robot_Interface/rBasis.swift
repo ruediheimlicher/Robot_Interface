@@ -161,7 +161,7 @@ class rBasis: rViewController
       //formatter.roundingMode = .down
       
       let sup = self.view.superview
-      print("DeviceTab superview: \(String(describing: sup)) ident: \(String(describing: sup?.identifier))")
+      //print("DeviceTab superview: \(String(describing: sup)) ident: \(String(describing: sup?.identifier))")
       
       //USB_OK.backgroundColor = NSColor.greenColor()
       // Do any additional setup after loading the view.
@@ -195,7 +195,7 @@ class rBasis: rViewController
       Pot1_Stepper_L_Feld.integerValue = 0 
       Pot1_Stepper_H.integerValue = Int(Pot1_Slider.maxValue)
       Pot1_Stepper_H_Feld.integerValue = Int(Pot1_Slider.maxValue)
-      print("intpos0: \(intpos0) intpos1: \(intpos1)")
+      //print("intpos0: \(intpos0) intpos1: \(intpos1)")
       // Pot 2
       Pot2_Slider.integerValue = Int(ACHSE2_START)
       Pot2_Feld.integerValue = Int(ACHSE2_START)
@@ -228,7 +228,7 @@ class rBasis: rViewController
    {
       let info = notification.userInfo
       let status:Int = info?["usbstatus"] as! Int // 
-      print("Basis usbstatusAktion:\t \(status)")
+      //print("Basis usbstatusAktion:\t \(status)")
       usbstatus = Int32(status)
    }
 
@@ -236,7 +236,7 @@ class rBasis: rViewController
  // MARK: joystick
    @objc override func joystickAktion(_ notification:Notification) 
    {
-     // print("Basis joystickAktion usbstatus:\t \(usbstatus) selectedDevice: \(selectedDevice) ident: \(self.view.identifier)")
+      print("Basis joystickAktion usbstatus:\t \(usbstatus) selectedDevice: \(selectedDevice) ident: \(self.view.identifier)")
       let sel = NSUserInterfaceItemIdentifier.init(selectedDevice)
      // if (selectedDevice == self.view.identifier)
       if (sel == self.view.identifier)
@@ -301,7 +301,7 @@ class rBasis: rViewController
             if (wegindex > 1)
             {
                print("")
-               print("joystickAktion cont achse0: \(achse0) achse1: \(achse1)  achse2: \(achse2) anz: \(String(describing: anz)) wegindex: \(wegindex)")
+               print("basis joystickAktion cont achse0: \(achse0) achse1: \(achse1)  achse2: \(achse2) anz: \(String(describing: anz)) wegindex: \(wegindex)")
                
                let lastposition = servoPfad?.pfadarray.last
                
@@ -322,7 +322,7 @@ class rBasis: rViewController
                let hyp:Float = (sqrt((Float(hypx + hypy + hypz))))
                
                let anzahlsteps = hyp/schrittweiteFeld.floatValue
-               print("joystickAktion hyp: \(hyp) anzahlsteps: \(anzahlsteps) ")
+               print("Basis joystickAktion hyp: \(hyp) anzahlsteps: \(anzahlsteps) ")
                
                teensy.write_byteArray[HYP_BYTE_H] = UInt8((Int(hyp) & 0xFF00) >> 8) // hb
                teensy.write_byteArray[HYP_BYTE_L] = UInt8((Int(hyp) & 0x00FF) & 0xFF) // lb
@@ -333,12 +333,12 @@ class rBasis: rViewController
                teensy.write_byteArray[INDEX_BYTE_H] = UInt8(((wegindex-1) & 0xFF00) >> 8) // hb // hb // Start, Index 0
                teensy.write_byteArray[INDEX_BYTE_L] = UInt8(((wegindex-1) & 0x00FF) & 0xFF) // lb
                
-               print("joystickAktion hypx: \(hypx) hypy: \(hypy) hypz: \(hypz) hyp: \(hyp)")
+               print("Basis joystickAktion hypx: \(hypx) hypy: \(hypy) hypz: \(hypz) hyp: \(hyp)")
                
             }
             else
             {
-               print("joystickAktion start achse0: \(achse0) achse1: \(achse1)  achse2: \(achse2) anz: \(anz) wegindex: \(wegindex)")
+               print("basis joystickAktion start achse0: \(achse0) achse1: \(achse1)  achse2: \(achse2) anz: \(anz) wegindex: \(wegindex)")
                teensy.write_byteArray[HYP_BYTE_H] = 0 // hb // Start, keine Hypo
                teensy.write_byteArray[HYP_BYTE_L] = 0 // lb
                teensy.write_byteArray[INDEX_BYTE_H] = 0 // hb // Start, Index 0

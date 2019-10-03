@@ -60,14 +60,23 @@ open class geom: NSObject
       {
          xs = absz_s1
          ys = ord_s1
+         Swift.print("**** ord_s1 > ord_s0")
       }
       
       // Winkel:
       var phi0:Double = asin((xs-absz0)/rad0) * 180/Double.pi
       var phi10:Double = acos((ord1-ys)/rad1) * 180/Double.pi
-      var phi1 = (90 - phi0) + phi10
-      phi1 = phi10 - phi0 // neu: 0 ist verlängerung des Arms
-      return (phi0,phi1)
+      
+      var phi11:Double = asin((absz1-xs )/rad1) * 180/Double.pi
+      
+ //     Swift.print("phi0: \(phi0) phi10: \(phi10)")
+      
+      //var phi1 = (90 - phi0) + phi10
+      
+      var phi1 = phi10 - phi0 // neu: Winkel 0 ist verlängerung des Arms0
+      var phi12 =  (180 - phi0) - phi11
+      
+      return (phi0,phi12)
    }
    
 } // class 

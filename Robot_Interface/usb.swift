@@ -249,7 +249,7 @@ open class usb_teensy: NSObject
    
    @objc open func cont_read_USB(_ timer: Timer)
    {
-      //print("*cont_read_USB read_OK: \(read_OK)")
+      print("*cont_read_USB read_OK: \(read_OK)")
       if (read_OK).boolValue
       {
          //var tempbyteArray = [UInt8](count: 32, repeatedValue: 0x00)

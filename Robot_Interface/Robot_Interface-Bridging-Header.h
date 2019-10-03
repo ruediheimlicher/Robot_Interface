@@ -11,3 +11,7 @@
 
 #import "hid.h"
 #import "kreisschnittpunkt.h"
+
+#include <IOKit/IOKitLib.h>
+#include <IOKit/usb/IOUSBLib.h>
+#include <IOKit/hid/IOHIDKeys.h>

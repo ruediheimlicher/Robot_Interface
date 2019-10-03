@@ -36,7 +36,7 @@ class rDrehknopfView: rJoystickView
    required init?(coder  aDecoder : NSCoder) 
    {
       super.init(coder: aDecoder)
-      Swift.print("DrehknopfFeld init")
+      //Swift.print("rDrehknopfView init")
       achsen.lineWidth = 1  // hair line
       
       knopfrect = bounds
@@ -63,12 +63,6 @@ class rDrehknopfView: rJoystickView
       zeigerpfad.line(to: NSMakePoint(mittex, h-12)) // destination
       
       zeigerpfad.lineWidth = 3 
-      //    var zeigerfeld = zeigerpfad.bounds
-      //    var zeigerrand:NSBezierPath = NSBezierPath()
-      //   zeigerrand.appendRect(zeigerfeld)
-      //   zeigerrand.move(to: NSMakePoint(mittex, 10))
-      //  zeigerpfad.rotateAroundCenter(angle:10)
-      //   zeigerbereich = zeigerpfad.bounds
       zeigerbereich = NSMakeRect(zeigerpfad.currentPoint.x - d/2, zeigerpfad.currentPoint.y - d/2,d,d)
       
       abdeckrect = bounds

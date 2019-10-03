@@ -100,7 +100,7 @@ class rTrigo: rViewController
       // Do any additional setup after loading the view.
       let newdataname = Notification.Name("newdata")
       NotificationCenter.default.addObserver(self, selector:#selector(newDataAktion(_:)),name:newdataname,object:nil)
-      NotificationCenter.default.addObserver(self, selector:#selector(joystickAktion(_:)),name:NSNotification.Name(rawValue: "joystick"),object:nil)
+//      NotificationCenter.default.addObserver(self, selector:#selector(joystickAktion(_:)),name:NSNotification.Name(rawValue: "joystick"),object:nil)
       NotificationCenter.default.addObserver(self, selector:#selector(usbstatusAktion(_:)),name:NSNotification.Name(rawValue: "usb_status"),object:nil)
       NotificationCenter.default.addObserver(self, selector:#selector(drehknopfAktion(_:)),name:NSNotification.Name(rawValue: "drehknopf"),object:nil)
 
@@ -235,16 +235,17 @@ class rTrigo: rViewController
    // MARK joystick
    @objc override func joystickAktion(_ notification:Notification) 
    {
-  //    print("Trigo joystickAktion usbstatus:\t \(usbstatus)  selectedDevice: \(selectedDevice) ident: \(String(describing: self.view.identifier))")
+      print("Trigo joystickAktion usbstatus:\t \(usbstatus)  selectedDevice: \(selectedDevice) ident: \(String(describing: self.view.identifier))")
       let sel = NSUserInterfaceItemIdentifier.init(selectedDevice)
      //  if (selectedDevice == self.view.identifier)
-      var ident = ""
+     // var ident = ""
       if (sel == self.view.identifier)
       {
   //       print("Trigo joystickAktion passt")
          
          var ident = "13"
          let info = notification.userInfo 
+         
          if let joystickident = info?["ident"]as? String
          {
             print("Trigo joystickAktion ident da: \(joystickident)")
@@ -415,12 +416,12 @@ class rTrigo: rViewController
  
    //MARK: Armwinkel
  
-   @IBAction  func report_armwinkel(_ sender: NSButton)
+   @IBAction  func report_setarmwinkel(_ sender: NSButton)
     {
       if (checkgeometrie() == true)
       {
          let winkeltup = winkelvonpunkt3D(x: endx.doubleValue, y: endy.doubleValue, z: endz.doubleValue)
-         print("report_armwinkel winkelvonpunkt: \(winkeltup)")
+         print("report_setarmwinkel winkelvonpunkt: \(winkeltup)")
          armwinkel0.doubleValue = winkeltup.0
          armwinkel1.doubleValue = winkeltup.1
          rotwinkel.doubleValue = winkeltup.2
@@ -447,7 +448,7 @@ class rTrigo: rViewController
          teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((intpos1 & 0xFF00) >> 8) // hb
          teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intpos1 & 0x00FF) & 0xFF) // lb
 
-         // Rotwinkel
+         // Armwinkel 2
          var pos2:Float = Float((180 - winkeltup.2 ) * 10)
          pos2Feld.integerValue = Int(pos2)
          let intpos2 = UInt16((pos2) * ROB_FAKTOR2)

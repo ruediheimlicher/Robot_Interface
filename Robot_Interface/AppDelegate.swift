@@ -23,10 +23,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
    {
       print("applicationShouldTerminate") 
       let nc = NotificationCenter.default
+      /*
       nc.post(name:Notification.Name(rawValue:"beenden"),
               object: nil,
               userInfo: nil)
-      
+      */
       return .terminateNow
    }
    

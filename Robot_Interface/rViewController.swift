@@ -90,7 +90,7 @@ class rServoPfad
    required init?() 
    {
       //super.init()
-      Swift.print("servoPfad init")
+      //Swift.print("servoPfad init")
       var startposition = position()
       startposition.x = 0
       startposition.y = 0
@@ -101,11 +101,16 @@ class rServoPfad
    
    func setStartposition(x:UInt16, y:UInt16, z:UInt16)
    {
+      let anz = pfadarray.count
       if (pfadarray.count > 0)
       {
          pfadarray[0].x = x
          pfadarray[0].y = y
          pfadarray[0].z = z
+      }
+      else
+      {
+         addPosition(newx: x, newy: y, newz: z)
       }
    }
    
@@ -134,7 +139,7 @@ class rDeviceTabViewController: NSTabViewController
    override func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) 
    {
       let identifier:String = tabViewItem?.identifier as! String
-      print("DeviceTab identifier: \(String(describing: identifier)) usbstatus: \(globalusbstatus)")
+    //  print("DeviceTab identifier: \(String(describing: identifier)) usbstatus: \(globalusbstatus)")
     // let sup = self.view.superview
      // print("DeviceTab superview: \(sup) ident: \(sup?.identifier)")
    //let supsup = self.view.superview?.superview
@@ -161,7 +166,8 @@ class rDeviceTabViewController: NSTabViewController
 //MARK: ViewController
 class rViewController: NSViewController, NSWindowDelegate
 {
-   
+   let notokimage :NSImage = NSImage(named:NSImage.Name(rawValue: "notok_image"))!
+   let okimage :NSImage = NSImage(named:NSImage.Name(rawValue: "ok_image"))!
    // Robot
    var z0:Float = 30 // Hoehe Drehpunkt 0
    var l0:Float = 1// laenge Arm 0
@@ -202,11 +208,19 @@ class rViewController: NSViewController, NSWindowDelegate
       var robot1_offset:Int
    }
 
- 
+   func windowWillClose(_ aNotification: Notification) {
+      print("windowWillClose")
+      let nc = NotificationCenter.default
+      nc.post(name:Notification.Name(rawValue:"beenden"),
+              object: nil,
+              userInfo: nil)
+      
+   }
+   
    override func viewDidLoad()
    {
       super.viewDidLoad()
-      
+      view.window?.delegate = self // https://stackoverflow.com/questions/44685445/trying-to-know-when-a-window-closes-in-a-macos-document-based-application
       self.view.window?.acceptsMouseMovedEvents = true
  
       formatter.maximumFractionDigits = 1
@@ -949,7 +963,7 @@ class rViewController: NSViewController, NSWindowDelegate
       let hidstatus = teensy.status()
       let nc = NotificationCenter.default
       var userinformation:[String : Any]
-      print("USBOpen usbstatus vor check: \(usbstatus) hidstatus: \(hidstatus) present: \(present)")
+     // print("USBOpen usbstatus vor check: \(usbstatus) hidstatus: \(hidstatus) present: \(present)")
       if (usbstatus > 0) // already open
       {
          print("USB-Device ist schon da")
@@ -964,12 +978,14 @@ class rViewController: NSViewController, NSWindowDelegate
       let erfolg = teensy.USBOpen()
       usbstatus = erfolg
       globalusbstatus = Int(erfolg)
-      print("USBOpen erfolg: \(erfolg) usbstatus: \(usbstatus)")
+   //   print("USBOpen erfolg: \(erfolg) usbstatus: \(usbstatus)")
       
       if (rawhid_status()==1)
       {
          print("status 1")
-         USB_OK.backgroundColor = NSColor.green
+         //USB_OK.backgroundColor = NSColor.green
+         //USB_OK.stringValue = "+"
+         USB_OK_Feld.image = okimage
          print("USB-Device da")
          /*
          let warnung = NSAlert.init()
@@ -984,7 +1000,7 @@ class rViewController: NSViewController, NSWindowDelegate
          //println(manustring) // ok, Zahl
          
          let manufactorername = String(cString: UnsafePointer(manu!))
-         print("str: ", manufactorername)
+       //  print("str: ", manufactorername)
          manufactorer.stringValue = manufactorername
          
          //manufactorer.stringValue = "Manufactorer: " + teensy.manufactorer()!
@@ -1001,6 +1017,9 @@ class rViewController: NSViewController, NSWindowDelegate
          
       {
          print("status 0")
+        // USB_OK.backgroundColor = NSColor.yellow
+        // USB_OK.stringValue = "-"
+         USB_OK_Feld.image = notokimage
          let warnung = NSAlert.init()
          warnung.messageText = "USB"
          warnung.messageText = "check_USB: Kein USB-Device"
@@ -1011,23 +1030,24 @@ class rViewController: NSViewController, NSWindowDelegate
                  object: nil,
                  userInfo: userinformation)
 
+         /*
          if let taste = USB_OK
          {
             //print("Taste USB_OK ist nicht nil")
             taste.backgroundColor = NSColor.red
          //USB_OK.backgroundColor = NSColor.redColor()
-            
+           
          }
          else
          {
             print("Taste USB_OK ist nil")
-         }
+         }*/ 
          Start_Knopf.isEnabled = false
          Stop_Knopf.isEnabled = false
          Send_Knopf.isEnabled = false
          return
       }
-      print("antwort: \(teensy.status())")
+      //print("antwort: \(teensy.status())")
    }
    
    @IBAction func report_stop_read_USB(_ sender: AnyObject)
@@ -1129,6 +1149,7 @@ class rViewController: NSViewController, NSWindowDelegate
    {
       print("viewDidAppear")
       self.view.window?.delegate = self as? NSWindowDelegate 
+      USB_OK_Feld.image = notokimage
    }
    
    @nonobjc func windowShouldClose(_ sender: Any) 
@@ -1222,7 +1243,8 @@ class rViewController: NSViewController, NSWindowDelegate
    
    @IBOutlet weak var Anzeige: NSTextField!
    
-   @IBOutlet weak var USB_OK: NSOutlineView!
+   //@IBOutlet weak var USB_OK: NSTextField!
+   @IBOutlet weak var USB_OK_Feld: NSImageView!
    
    @IBOutlet weak var check_USB_Knopf: NSButton!
    
