@@ -11,8 +11,11 @@ import Foundation
 let GOTO_0:UInt8  =  0xA7
 let SET_RING:UInt8  =  0xA3
 let CLEAR_RING:UInt8  =  0xA4
-let SET_WEG:UInt8  =  0xA5
-let CLEAR_WEG:UInt8  =  0xA6
+let END_RING: UInt8 = 0xA5
+
+let SET_WEG:UInt8  =  0xA6
+let CLEAR_WEG:UInt8  =  0xA7
+let END_WEG:UInt8  =  0xA8
 
 let DREHKNOPF:UInt8 = 0xAA
 
