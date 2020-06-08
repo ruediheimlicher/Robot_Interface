@@ -625,15 +625,17 @@ class rRobot: rViewController
       if (checkgeometrie() == true)
       {
          
+         
+         
          let intx0:UInt16 = UInt16(startx.integerValue)
          let inty0:UInt16 = UInt16(starty.integerValue)
          let intz0:UInt16 = UInt16(startz.integerValue)
          
          
          // servopfad endpos
-         let intx1:UInt16 = UInt16(endx.integerValue)
-         let inty1:UInt16 = UInt16(endy.integerValue)
-         let intz1:UInt16 = UInt16(endz.integerValue)
+  //       let intx1:UInt16 = UInt16(endx.integerValue)
+  //       let inty1:UInt16 = UInt16(endy.integerValue)
+  //       let intz1:UInt16 = UInt16(endz.integerValue)
          
          var newx:Float = 0
          var newy:Float = 0
@@ -650,7 +652,7 @@ class rRobot: rViewController
          let winkeltup = winkelvonpunkt3D(x: endx.doubleValue, y: endy.doubleValue, z: endz.doubleValue)
          print("report_setweg            winkelvonpunkt: \(winkeltup)")
          
-         teensy.write_byteArray[0] = SET_ROB
+         teensy.write_byteArray[0] = SET_WEG
          
          
           
@@ -712,6 +714,7 @@ class rRobot: rViewController
          teensy.write_byteArray[ACHSE0_START_BYTE_H] = UInt8((rotoffset0 & 0xFF00) >> 8) // hb
          teensy.write_byteArray[ACHSE0_START_BYTE_L] = UInt8((rotoffset0 & 0x00FF) & 0xFF) // lb
 
+         // erste pos anlaufen mit setRob
          if (globalusbstatus > 0)
          {
             let senderfolg = teensy.send_USB()
@@ -746,8 +749,8 @@ class rRobot: rViewController
          let dy = (zielyfloat - endy.floatValue) / anzfloat
          let dz = (zielzfloat - endz.floatValue) / anzfloat
 
-         
          teensy.write_byteArray[0] = SET_WEG
+         
          
          teensy.write_byteArray[STEPS_BYTE_H] = UInt8((Int(anzschritte) & 0xFF00) >> 8) // hb
          teensy.write_byteArray[STEPS_BYTE_L] = UInt8((Int(anzschritte) & 0x00FF) & 0xFF) // lb
@@ -766,7 +769,7 @@ class rRobot: rViewController
             // winkel um z-achse 90° ist ri y-achse
             var phiz0 = asin((newx-startx.floatValue)/diagxy) * 180/(Float.pi)
       //      let phiz = 90 - phiz0
-            
+            phiz0 = 90 + phiz0
             // Ergebnisse 
             var xi0:Double = 0, yi0:Double = 0, xi1: Double = 0, yi1:Double = 0, xi11: Double = 0, yi11:Double = 0
             
@@ -794,7 +797,7 @@ class rRobot: rViewController
             
             // Winkel 1: arm 0
             let winkel1 = winkelfaktor1 * (robotarmwinkel.0)
-            print("report_setarmwinkel ausgabewinkel1: \(winkel1)")
+       //     print("report_setarmwinkel ausgabewinkel1: \(winkel1)")
             
             let intpos1 = UInt16(winkel1)
             
@@ -806,7 +809,7 @@ class rRobot: rViewController
 
             // Winkel 2: arm 1
             let winkel2 = winkelfaktor2 *  (robotarmwinkel.1)
-            print("report_setarmwinkel ausgabewinkel2: \(winkel2)")
+       //     print("report_setarmwinkel ausgabewinkel2: \(winkel2)")
             let intpos2 = UInt16(winkel2) 
             teensy.write_byteArray[ACHSE2_BYTE_H] = UInt8((intpos2 & 0xFF00) >> 8) // hb
             teensy.write_byteArray[ACHSE2_BYTE_L] = UInt8((intpos2 & 0x00FF) & 0xFF) // lb
@@ -817,7 +820,7 @@ class rRobot: rViewController
             teensy.write_byteArray[INDEX_BYTE_H] = UInt8(((wegmarke) & 0xFF00) >> 8) // hb // hb // Start, Index 0
             teensy.write_byteArray[INDEX_BYTE_L] = UInt8(((wegmarke) & 0x00FF) & 0xFF) // lb
             
-            print("\(wegmarke)\t\(rotwinkel)\t\(winkel1)\t\(winkel2)")
+            print("\(wegmarke)\t\(intpos0)\t\(winkel1)\t\(winkel2)")
             if (globalusbstatus > 0)
             {
                let senderfolg = teensy.send_USB()
@@ -828,7 +831,7 @@ class rRobot: rViewController
             
          } // for
          
-         print("posarray: \(posarray)")
+         //print("posarray: \(posarray)")
          //print("winkelarray: \(winkelarray)")
          var i=0
          for zeile in winkelarray
@@ -861,9 +864,9 @@ class rRobot: rViewController
          let intz0:UInt16 = UInt16(startz.integerValue)
  
          // servopfad endpos
-         let intx1:UInt16 = UInt16(endx.integerValue)
-         let inty1:UInt16 = UInt16(endy.integerValue)
-         let intz1:UInt16 = UInt16(endz.integerValue)
+   //      let intx1:UInt16 = UInt16(endx.integerValue)
+   //      let inty1:UInt16 = UInt16(endy.integerValue)
+   //      let intz1:UInt16 = UInt16(endz.integerValue)
 
          
          servoPfad?.setStartposition(x: intx0, y: inty0, z: intz0)

@@ -328,6 +328,22 @@ class rViewController: NSViewController, NSWindowDelegate
      */
    }
    
+   override func viewDidAppear() 
+   {
+      print("viewDidAppear")
+      self.view.window?.delegate = self as? NSWindowDelegate 
+      let erfolg = teensy.USBOpen()
+      if erfolg == 1
+      {
+         USB_OK_Feld.image = okimage
+      }
+      else
+      {
+         USB_OK_Feld.image = notokimage
+      }
+      
+   }
+
    @objc func beendenAktion(_ notification:Notification) 
    {
       
@@ -1145,12 +1161,6 @@ class rViewController: NSViewController, NSWindowDelegate
    }
    
    // https://nabtron.com/quit-cocoa-app-window-close/
-   override func viewDidAppear() 
-   {
-      print("viewDidAppear")
-      self.view.window?.delegate = self as? NSWindowDelegate 
-      USB_OK_Feld.image = notokimage
-   }
    
    @nonobjc func windowShouldClose(_ sender: Any) 
    {
