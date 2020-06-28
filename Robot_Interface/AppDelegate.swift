@@ -19,7 +19,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
    }
 
    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply
-
    {
       print("applicationShouldTerminate") 
       let nc = NotificationCenter.default

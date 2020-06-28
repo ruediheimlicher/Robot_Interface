@@ -352,6 +352,7 @@ class rViewController: NSViewController, NSWindowDelegate
       
       
    }
+   
    @objc func tabviewAktion(_ notification:Notification) 
    {
       let info = notification.userInfo
