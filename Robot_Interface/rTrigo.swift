@@ -8,19 +8,19 @@
 
 import Cocoa
 
-/*
-let ROB_ACHSE0_MIN:UInt16 = 0x7FF // Startwert low
-let ROB_ACHSE0_MAX:UInt16 = 0xFFF // Startwert high
+
+let ROB0_MIN:UInt16 = 0x7FF // Startwert low
+let ROB0_MAX:UInt16 = 0xFFF // Startwert high
 let ROB_FAKTOR0:Float = 1.6
 
-let ROB_ACHSE1_MIN:UInt16 = 600 // Startwert low
-let ROB_ACHSE1_MAX:UInt16 = 1900 // Startwert high
+let ROB1_MIN:UInt16 = 600 // Startwert low
+let ROB1_MAX:UInt16 = 1900 // Startwert high
 let ROB_FAKTOR1:Float = 2.7
 
-let ROB_ACHSE2_MIN:UInt16 = 500 // Startwert low
-let ROB_ACHSE2_MAX:UInt16 = 1900// Startwert high
+let ROB2_MIN:UInt16 = 500 // Startwert low
+let ROB2_MAX:UInt16 = 1900// Startwert high
 let ROB_FAKTOR2:Float = 2.9
-*/
+
 
 class rTrigo: rViewController 
 {
@@ -105,11 +105,11 @@ class rTrigo: rViewController
       NotificationCenter.default.addObserver(self, selector:#selector(drehknopfAktion(_:)),name:NSNotification.Name(rawValue: "drehknopf"),object:nil)
 
       
-  //    Pot1_Slider.maxValue = Double(ROB_ACHSE1_MAX)
+  //    Pot1_Slider.maxValue = Double(ROB1_MAX)
       Pot1_Stepper_H.integerValue = Int(Pot1_Slider.maxValue)
       Pot1_Stepper_H_Feld.integerValue = Int(Pot1_Slider.maxValue)
       
-      Pot1_Slider.minValue = Double(ROB_ACHSE1_MIN)
+      Pot1_Slider.minValue = Double(ROB1_MIN)
       Pot1_Stepper_L.integerValue = Int(Pot1_Slider.minValue)
       Pot1_Stepper_L_Feld.integerValue = Int(Pot1_Slider.minValue)
       Pot1_Feld_raw.integerValue = Int(UInt16(ACHSE1_MAX ))
@@ -127,7 +127,7 @@ class rTrigo: rViewController
       Pot2_Stepper_H.integerValue = Int(Pot2_Slider.maxValue)
       Pot2_Stepper_H_Feld.integerValue = Int(Pot2_Slider.maxValue)
       
-      Pot2_Slider.minValue = Double(ROB_ACHSE2_MIN)
+      Pot2_Slider.minValue = Double(ROB2_MIN)
       Pot2_Stepper_L.integerValue = Int(Pot2_Slider.minValue)
       Pot2_Stepper_L_Feld.integerValue = Int(Pot2_Slider.minValue)
       Pot2_Feld_raw.integerValue = Int(UInt16(ACHSE2_MAX ))
@@ -241,7 +241,7 @@ class rTrigo: rViewController
      // var ident = ""
       if (sel == self.view.identifier)
       {
-  //       print("Trigo joystickAktion passt")
+         print("Trigo joystickAktion passt")
          
          var ident = "13"
          let info = notification.userInfo 
@@ -416,74 +416,7 @@ class rTrigo: rViewController
  
    //MARK: Armwinkel
  
-   @IBAction  func report_setarmwinkel(_ sender: NSButton)
-    {
-      if (checkgeometrie() == true)
-      {
-         let winkeltup = winkelvonpunkt3D(x: endx.doubleValue, y: endy.doubleValue, z: endz.doubleValue)
-         print("report_setarmwinkel winkelvonpunkt: \(winkeltup)")
-         armwinkel0.doubleValue = winkeltup.0
-         armwinkel1.doubleValue = winkeltup.1
-         rotwinkel.doubleValue = winkeltup.2
-         
-         // set Robot
-         teensy.write_byteArray[0] = SET_ROB // Code
-         
-         // Armwinkel 0
-         var pos0:Float = Float((180 - winkeltup.0 ) * 10)
-         pos0Feld.integerValue = Int(pos0)
-         let intpos0 = UInt16((pos0) * ROB_FAKTOR0)
-         print("set robot achse0 pos0: \(pos0) intpos0: \(intpos0)") 
-         intpos0Feld.integerValue = Int(intpos0)
-         teensy.write_byteArray[ACHSE0_BYTE_H] = UInt8((intpos0 & 0xFF00) >> 8) // hb
-         teensy.write_byteArray[ACHSE0_BYTE_L] = UInt8((intpos0 & 0x00FF) & 0xFF) // lb
-
-         
-         // Armwinkel 1
-         var pos1:Float = Float((180 - winkeltup.1 ) * 10)
-         pos1Feld.integerValue = Int(pos1)
-         let intpos1 = UInt16((pos1) * ROB_FAKTOR1)
-         print("set robot achse1 pos1: \(pos1) intpos1: \(intpos1)") 
-         intpos1Feld.integerValue = Int(intpos1)
-         teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((intpos1 & 0xFF00) >> 8) // hb
-         teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intpos1 & 0x00FF) & 0xFF) // lb
-
-         // Armwinkel 2
-         var pos2:Float = Float((180 - winkeltup.2 ) * 10)
-         pos2Feld.integerValue = Int(pos2)
-         let intpos2 = UInt16((pos2) * ROB_FAKTOR2)
-         print("set robot achse2 pos2: \(pos2) intpos2: \(intpos2)") 
-         intpos2Feld.integerValue = Int(intpos2)
-         teensy.write_byteArray[ACHSE2_BYTE_H] = UInt8((intpos2 & 0xFF00) >> 8) // hb
-         teensy.write_byteArray[ACHSE2_BYTE_L] = UInt8((intpos2 & 0x00FF) & 0xFF) // lb
-  
-         /*
-         // Armwinkel 2
-         var pos1:Float = Float((180 - winkeltup.1 ) * 10)
-         pos1Feld.integerValue = Int(pos1)
-         let intpos1 = UInt16((pos1) * ROB_FAKTOR1)
-         print("set robot achse1 pos1: \(pos1) intpos1: \(intpos1)") 
-         intpos1Feld.integerValue = Int(intpos1)
-         teensy.write_byteArray[ACHSE1_BYTE_H] = UInt8((intpos1 & 0xFF00) >> 8) // hb
-         teensy.write_byteArray[ACHSE1_BYTE_L] = UInt8((intpos1 & 0x00FF) & 0xFF) // lb
-*/
-         if (globalusbstatus > 0)
-         {
-            let senderfolg = teensy.send_USB()
-            
-         }
-
-      }
-      else
-      {
-         print("Geometrie hat keine Lösung")
-         armwinkel0.stringValue = "---"
-         armwinkel1.stringValue = "---"
-         rotwinkel.stringValue = "-"
-
-      }
-      
-   }
+     
    
    // nur 2 Dim: x,z. y1 alz z benutzt
     func winkelvonpunkt( x:Double  ,  y:Double,   z:Double) -> (Double, Double)
