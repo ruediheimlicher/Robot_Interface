@@ -407,8 +407,8 @@ class rRobot: rViewController
                   
                   let hyp:Float = (sqrt((Float(hypx + hypy + hypz)))) // Gesamter Weg ueber x,y,z
                   
-                  let anzahlsteps = hyp/schrittweiteFeld.floatValue
-                  print("Robot joystickAktion hyp: \(hyp) anzahlsteps: \(anzahlsteps) ")
+    //              let anzahlsteps = hyp/schrittweiteFeld.floatValue
+     //             print("Robot joystickAktion hyp: \(hyp) anzahlsteps: \(anzahlsteps) ")
                   
                   teensy.write_byteArray[HYP_BYTE_H] = UInt8((Int(hyp) & 0xFF00) >> 8) // hb
                   teensy.write_byteArray[HYP_BYTE_L] = UInt8((Int(hyp) & 0x00FF) & 0xFF) // lb
