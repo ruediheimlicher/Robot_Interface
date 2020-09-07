@@ -241,7 +241,7 @@ class rTrigo: rViewController
      // var ident = ""
       if (sel == self.view.identifier)
       {
-  //       print("Trigo joystickAktion passt")
+         print("Trigo joystickAktion passt")
          
          var ident = "13"
          let info = notification.userInfo 
