@@ -406,6 +406,7 @@ class rRobot: rViewController
          }         
       } // identifier passt
    }
+ 
    @objc func setDrehknopfwinkel(winkel:Float)
    {
       print("Robot setDrehknopfwinkel winkel:\t \(winkel)") 
