@@ -995,7 +995,7 @@ class rViewController: NSViewController, NSWindowDelegate
       let erfolg = teensy.USBOpen()
       usbstatus = erfolg
       globalusbstatus = Int(erfolg)
-   //   print("USBOpen erfolg: \(erfolg) usbstatus: \(usbstatus)")
+      print("USBOpen erfolg: \(erfolg) usbstatus: \(usbstatus)")
       
       if (rawhid_status()==1)
       {
