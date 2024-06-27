@@ -189,7 +189,7 @@ class rViewController: NSViewController, NSWindowDelegate
    
    var hgfarbe  = NSColor()
    
-  
+   var  lastmauspunkt:CGPoint = CGPoint()
    
    var formatter = NumberFormatter()
    

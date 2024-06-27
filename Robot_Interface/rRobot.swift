@@ -25,10 +25,12 @@ let LOK2_START:UInt16 = 15 // Startwert Slider 1
 let LOK2_OFFSET:UInt16 = 8 // starteinstellung
 let LOK_FAKTOR2:Float = 1
 
+
+
 class rRobot: rViewController 
 {
 
-    @IBOutlet weak var Intervalltimer_Feld: NSTextField!
+   @IBOutlet weak var Intervalltimer_Feld: NSTextField!
    @IBOutlet weak var Intervalltimer_Stepper: NSStepper!
    
    
@@ -68,6 +70,27 @@ class rRobot: rViewController
    @IBOutlet weak var c1: NSSegmentedControl!
    @IBOutlet weak var c2: NSSegmentedControl!
    @IBOutlet weak var c3: NSSegmentedControl!
+   
+   @IBOutlet weak var x1_Slider: NSSlider!
+   @IBOutlet weak var y1_Slider: NSSlider!
+   @IBOutlet weak var z1_Slider: NSSlider!
+ 
+   @IBOutlet weak var startx: NSTextField!
+   @IBOutlet weak var starty: NSTextField!
+   @IBOutlet weak var startz: NSTextField!
+   
+   
+   @IBOutlet weak var endx: NSTextField!
+   @IBOutlet weak var endy: NSTextField!
+   @IBOutlet weak var endz: NSTextField!
+   
+   @IBOutlet weak var arm0: NSTextField!
+   @IBOutlet weak var arm1: NSTextField!
+ 
+   @IBOutlet weak var armwinkel0: NSTextField!
+   @IBOutlet weak var armwinkel1: NSTextField!
+   @IBOutlet weak var rotwinkel: NSTextField!
+
    
    var hintergrundfarbe = NSColor()
    
@@ -127,8 +150,8 @@ class rRobot: rViewController
       let a1seg  = Int(UserDefaults.standard.string(forKey: "a1index") ?? "0")
       let a2seg  = Int(UserDefaults.standard.string(forKey: "a2index") ?? "0")
       let a3seg  = Int(UserDefaults.standard.string(forKey: "a3index") ?? "0")
-      //print("UserDefaults a0seg: \(a0seg)")
-      a0.selectSegment(withTag: a0seg ?? 0)
+      print("UserDefaults a0seg: \(a0seg)")
+      a0.selectSegment(withTag:  a0seg ?? 0)
       a1.selectSegment(withTag:  a1seg ?? 0)
       a2.selectSegment(withTag:  a2seg ?? 0)
       a3.selectSegment(withTag:  a3seg ?? 0)
@@ -281,20 +304,24 @@ class rRobot: rViewController
    // MARK joystick
    @objc override func joystickAktion(_ notification:Notification) 
    {
-          print("Robot joystickAktion usbstatus:\t \(usbstatus)  selectedDevice: \(selectedDevice) ident: \(String(describing: self.view.identifier))")
+          //print("Robot joystickAktion usbstatus:\t \(usbstatus)  selectedDevice: \(selectedDevice) ident: \(String(describing: self.view.identifier))")
       let sel = NSUserInterfaceItemIdentifier.init(selectedDevice)
       //  if (selectedDevice == self.view.identifier)
       //var ident = ""
       if (sel == self.view.identifier)
       {
-         print("Robot joystickAktion passt")
+         //print("Robot joystickAktion passt")
          
          var ident = "13"
+         var identInt = -1
          let info = notification.userInfo 
-         print("Robot joystickAktion info: \(info)")
+         //print("Robot joystickAktion info: \(info)")
          let i = info?["ident"]
-         print("Robot joystickAktion i: \(i)")
-         if let joystickident = info?["ident"]as? String
+         //print("Robot joystickAktion i: \(i)")
+         let istring = info?["ident"]as? String
+         /*
+         var istring2:String = ""
+         if let joystickident = info?["ident"]as? String // >>> kein Ergebnis
          {
             print("Robot joystickAktion ident da: \(joystickident)")
             ident = joystickident
@@ -303,6 +330,20 @@ class rRobot: rViewController
          {
             print("Robot joystickAktion ident nicht da")
          }
+         */
+         if let joystickident = info?["ident"]
+         {
+            ident = info?["ident"] as? String ?? "33"
+            //print("Robot joystickAktion ident raw da: \(joystickident) ident: \(ident)")
+         }
+         else
+         {
+            print("Robot joystickAktion ident raw nicht da")
+         }
+           
+        // print("Robot joystickAktion istring: \(istring)")
+        // print("Robot joystickAktion ident: \(ident)")
+         
          // let id = NSUserInterfaceItemIdentifier.init(rawValue:(info?["ident"] as! NSString) as String)
          
          
@@ -313,20 +354,43 @@ class rRobot: rViewController
          let wegindex:Int = info?["index"] as! Int // 
          let first:Int = info?["first"] as! Int
          
-         //      print("Robot joystickAktion:\t \(punkt)")
-         //      print("x: \(punkt.x) y: \(punkt.y) index: \(wegindex) first: \(first) ident: \(ident)")
+         //print("Robot joystickAktion lastmauspunkt:\t x: \t\(lastmauspunkt.x) \ty: \(lastmauspunkt.y)")
+         let distx = pow((punkt.x - lastmauspunkt.x),2)
+         let disty = pow((punkt.y - lastmauspunkt.y),2)
+         let distanz = sqrt(distx + disty)
+         let distxstring = String(format: "%.2f",distx)
+         let distystring = String(format: "%.2f",disty)
+         let distanzstring = String(format: "%.2f",distanz)
+         if distanz > 5
+         {
+         //print("Robot joystickAktion distx: \(distx) disty: \(disty) x: \t\(punkt.x) \ty: \t\(punkt.y) \tindex: \t\(wegindex) \tfirst: \(first) ident: \(ident)")
+            print("Robot joystickAktion distx: \(distxstring) disty: \(distystring) distanz:  \(distanzstring)")
+            
+            lastmauspunkt = punkt
+         }
          
+         /*        
+         if istring == "3001" // Drehknopf
+         {
+            print("Drehknopf istring 3001")
+          }
+         else if istring == "3000" // Joystick
+         {
+            print("joystick istring 3000")
+            
+         }
+*/         
          
          if ident == "3001" // Drehknopf
          {
-            print("Drehknopf ident 2001")
+            print("Drehknopf ident 3001")
             teensy.write_byteArray[0] = DREHKNOPF
             let winkel = Int(punkt.x )
             print("Drehknopf winkel: \(winkel)")
          }
-         else if ident == "3000"
-            
+         else if ident == "3000" // Joystick
          {
+            //print("joystick ident 3000")
             
             teensy.write_byteArray[0] = SET_ROB // Code 
             

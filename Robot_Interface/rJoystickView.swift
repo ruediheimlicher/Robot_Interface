@@ -109,7 +109,8 @@ class rJoystickView: NSView
          identstring = "13"
       
       }
-      
+      Swift.print("left mouse identstring: \(identstring)")
+    
       let location = theEvent.locationInWindow
       //    Swift.print(location)
       //    NSPoint lokalpunkt = [self convertPoint: [anEvent locationInWindow] fromView: nil];
@@ -173,12 +174,31 @@ class rJoystickView: NSView
    
    override func mouseDragged(with theEvent: NSEvent) 
    {
-      Swift.print("mouseDragged")
+      //Swift.print("mouseDragged")
+      super.mouseDragged(with: theEvent)
       let location = theEvent.locationInWindow
       //Swift.print(location)
+      let ident  = self.identifier
+     
+     //Swift.print("mousedragged ident: \(ident)")
+     var identstring = ""
+      var identInt:Int = 0
+     if let rawident:String = ident?.rawValue
+     {
+        identstring = rawident
+        //Swift.print("mousedragged identstring ist da")
+        identInt =  Int(rawident) ?? 19      
+     }
+     else
+     {
+        identstring = "17"
+           Swift.print("mousedragged identstring ist nicht da")
+     }
+                       
+      
       var lokalpunkt = convert(theEvent.locationInWindow, from: nil)
       var userinformation:[String : Any]
-      Swift.print(lokalpunkt)
+      //Swift.print(lokalpunkt)
       if (lokalpunkt.x >= self.bounds.size.width)
       {
          lokalpunkt.x = self.bounds.size.width
@@ -200,8 +220,8 @@ class rJoystickView: NSView
       weg.line(to: lokalpunkt)
       
       needsDisplay = true
-      userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": -1] as [String : Any]
-      userinformation["ident"] = self.identifier
+      userinformation = ["message":"mousedown", "punkt": lokalpunkt, "index": weg.elementCount, "first": -1,"ident" :identstring,"id" :identInt] as [String : Any]
+      //userinformation["ident"] = self.identifier
       
       let nc = NotificationCenter.default
       nc.post(name:Notification.Name(rawValue:"joystick"),
